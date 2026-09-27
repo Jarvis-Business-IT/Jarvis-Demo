@@ -1,0 +1,20 @@
+/* La striscia della demo in cima alla pagina: discreta, sempre visibile, porta all'abbonamento.
+   Il pannello vero sotto scende di --banner-demo. */
+:root { --banner-demo: 26px; }
+.demo-banner {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--banner-demo); z-index: 40;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(90deg, rgba(89, 156, 231, .16), rgba(147, 134, 242, .16)), var(--chrome);
+  border-bottom: 1px solid var(--accento-linea); color: var(--testo-2);
+  font-size: 12px; letter-spacing: .01em; text-decoration: none; white-space: nowrap; overflow: hidden;
+}
+.demo-banner b { color: var(--accento); font-weight: 600; }
+.demo-banner:hover { color: var(--testo); background: linear-gradient(90deg, rgba(89, 156, 231, .26), rgba(147, 134, 242, .26)), var(--chrome); }
+body.con-banner-demo { padding-top: var(--banner-demo); box-sizing: border-box; }
+body.con-banner-demo .app { height: calc(100vh - var(--banner-demo)); height: calc(100dvh - var(--banner-demo)); }
+body.con-banner-demo .app.destra-intera .destra { margin-top: var(--banner-demo); }
+@media (max-width: 760px) {
+  body.con-banner-demo .lato { top: var(--banner-demo); }
+  .demo-banner { font-size: 11px; justify-content: flex-start; padding: 0 10px; }
+}
+
