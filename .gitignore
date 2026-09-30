@@ -1,0 +1,45 @@
+
+# ===== segreti e dati: MAI nel repository (blocco standard, 30/09/2026) =====
+# credenziali
+.env
+.env.*
+!.env.esempio
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+*.token
+*credentials*.json
+*service-account*.json
+# database, copie e dati di chi lo usa
+*.sql
+*.sql.gz
+*.dump
+*.sqlite
+*.sqlite3
+*.db
+*.bak
+*.bak-*
+backup/
+backups/
+filestore/
+odoo.conf
+dati-cliente/
+clienti/
+# log, cache, ambienti, editor, sistema
+*.log
+logs/
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
