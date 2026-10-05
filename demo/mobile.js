@@ -1,22 +1,22 @@
-// Command Center sul telefono (2026-10-03: ottimizzato in tutte le pagine).
+// Command Center sul telefono (2026-10-03, richiesta dell'utente: «ottimizzata in TUTTE le pagine»).
 // Va con mobile.css. Si carica dopo app.js (defer) e ne usa le funzioni globali solo se ci sono.
 // Fa quattro cose:
-//  1. la barra di schede in basso e il foglio «Impostazioni». 2026-10-05: la barra scorre col dito e ha TUTTE
-//     le pagine, nello stesso ordine della barra in alto del desktop, con l'ultima voce «Impostazioni»; la voce attiva si porta in vista da sola. Le voci si
-//     ricostruiscono dal menu in alto quando cambia (stesse pagine, spie e contatori: una sola fonte). Il foglio ha
-//     agenti, motore e nuova chat;
+//  1. la barra di schede in basso e il foglio «Impostazioni». 2026-10-05 (l'utente): la barra scorre col dito e ha TUTTE
+//     le pagine, nello stesso ordine della barra in alto del desktop (barra.js, menu-barra.json: prima le voci «in barra»,
+//     poi quelle di «Altro»), con l'ultima voce «Impostazioni»; la voce attiva si porta in vista da sola. Le voci si
+//     ricostruiscono dal menu in alto quando cambia (stesse pagine, spie e contatori: una sola fonte). Il foglio non ha
+//     più pagine: tema, avatar (temi.js, dots.js), agenti e motore, e nell'app Android «Voce, telefono e impostazioni»;
 //  2. l'altezza della pagina segue la tastiera (visualViewport): il campo della chat resta sopra;
 //  3. sulla lavagna lo zoom a due dita (spostare schede e foglio con un dito lo fa già app.js);
 //  4. un tocco su un messaggio mostra le sue azioni (copia, modifica, togli), che sul desktop
 //     compaiono al passaggio del mouse.
 // Sopra 820 px col mouse non cambia niente: gli elementi nuovi sono nascosti da mobile.css e qui non si tocca nessuno
 // stile della pagina. 2026-10-05: col dito (pointer: coarse, senza hover) vale l'impaginazione del telefono a ogni
-// larghezza, così il tablet è uguale al telefono (prima fra 821 e 1100 px restava la colonna degli agenti fissa
+// larghezza, così il tablet è uguale al telefono dell'utente (prima fra 821 e 1100 px restava la colonna degli agenti fissa
 // e la lavagna ne perdeva 248 px).
 (function mobile() {
   "use strict";
   const $ = (id) => document.getElementById(id);
-  const T = (s) => (typeof t === "function" ? t(s) : s);   // le 5 lingue del pannello (app.js)
   const app = $("app");
   const menu = document.querySelector(".schede.menu");
   if (!app || !menu) return;
@@ -41,12 +41,17 @@
     altro: svg('<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'),   // pagina che non ha un'icona sua
   };
   const nomeVoce = (a) => [...a.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join("").trim() || a.dataset.vista;
-  // le pagine del menu in alto nell'ordine in cui le vede il desktop, senza quelle nascoste
+  // le pagine del menu in alto nell'ordine in cui le vede il desktop: barra.js le mette in fila (prima «in barra», poi la
+  // tendina «Altro», che sta dentro .menu). Senza i doppioni che barra.js segna e senza quelle che un foglio di stile
+  // nasconde fuori dal telefono (dentro il ponte senza «tutto»): su questa si decide con la classe del ponte, non col display
+  // del menu in alto, che sul telefono è nascosto tutto.
+  const nascostaDalPonte = (v) => document.documentElement.classList.contains("dentro-ponte")
+    && !document.documentElement.classList.contains("ponte-tutto") && ["terminale", "vps", "tecnico"].includes(v);
   function pagine() {
     const viste = new Map();
     for (const a of menu.querySelectorAll("a[data-vista]")) {
       const v = a.dataset.vista;
-      if (viste.has(v) || a.hidden || a.classList.contains("bm-doppione")) continue;
+      if (viste.has(v) || a.hidden || a.classList.contains("bm-doppione") || nascostaDalPonte(v)) continue;
       viste.set(v, a);
     }
     return viste;
@@ -64,7 +69,7 @@
   const apriLato = $("apri-lato");
   if (apriLato) apriLato.after(marca); else menu.before(marca);
 
-  const barra = crea("nav", { class: "m-schede", "aria-label": T("Pagine") });
+  const barra = crea("nav", { class: "m-schede", "aria-label": "Pagine" });
   const scorre = crea("div", { class: "m-schede-scorre" });
   barra.append(scorre);
   const tab = (vista, testo) => {
@@ -75,15 +80,16 @@
   };
   const bImp = crea("button", { type: "button", "data-m": "impostazioni", "aria-haspopup": "dialog", "aria-expanded": "false", "aria-controls": "m-foglio" }, ICONE.impostazioni);
   bImp.append(crea("span", {}, ""), crea("i", { class: "spia grigia", "aria-hidden": "true" }));
-  bImp.querySelector("span").textContent = T("Impostazioni");
+  bImp.querySelector("span").textContent = "Impostazioni";
 
   const velo = crea("div", { class: "m-foglio-velo" });
-  const foglio = crea("div", { class: "m-foglio", role: "dialog", "aria-modal": "true", "aria-label": T("Impostazioni"), id: "m-foglio" });
+  const foglio = crea("div", { class: "m-foglio", role: "dialog", "aria-modal": "true", "aria-label": "Impostazioni", id: "m-foglio" });
   const testa = crea("div", { class: "m-foglio-testa" });
-  testa.append(crea("b", {}, ""));
-  testa.firstChild.textContent = T("Impostazioni");
-  const chiudi = crea("button", { type: "button", class: "icona", "aria-label": T("Chiudi") }, "✕");
+  testa.append(crea("b", {}, "Impostazioni"));
+  const chiudi = crea("button", { type: "button", class: "icona", "aria-label": "Chiudi" }, "✕");
   testa.append(chiudi);
+  // .m-foglio-griglia resta il nome: temi.js e dots.js ci montano le righe «Tema» e «Avatar». Le voci di pagina che
+  // registro, connessioni, piani e incarichi ci aggiungono ancora non si vedono (mobile.css): stanno nella barra in basso.
   const griglia = crea("div", { class: "m-foglio-griglia" });
   foglio.append(crea("div", { class: "m-foglio-maniglia", "aria-hidden": "true" }), testa, griglia);
   const largo = (ico, testo) => {
@@ -94,7 +100,10 @@
     griglia.append(b);
     return b;
   };
-  const bAgenti = largo("☰", T("Agenti, motore e nuova chat"));
+  const bAgenti = largo("☰", "Agenti, motore e nuova chat");
+  // dentro l'app Android (WebActivity, ponte window.JarvisApp): la schermata nativa con voce, permessi e impostazioni dell'app
+  const appAndroid = window.JarvisApp && typeof window.JarvisApp.apriVoceETelefono === "function";
+  const bApp = appAndroid ? largo("⚙", "Voce, telefono e impostazioni dell'app") : null;
   app.append(barra, velo, foglio);
 
   function apriFoglio(si) {
@@ -110,6 +119,7 @@
   velo.addEventListener("click", () => apriFoglio(false));
   griglia.addEventListener("click", (ev) => { if (ev.target.closest("a")) apriFoglio(false); });
   bAgenti.addEventListener("click", () => { apriFoglio(false); app.classList.add("lato-aperto"); });
+  if (bApp) bApp.addEventListener("click", () => { apriFoglio(false); try { window.JarvisApp.apriVoceETelefono(); } catch (e) { /* app vecchia */ } });
   document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && foglio.classList.contains("aperto")) apriFoglio(false); });
   // un tocco sulla scheda già aperta riporta in cima la pagina (come nelle app)
   scorre.addEventListener("click", (ev) => {
@@ -172,6 +182,8 @@
     else bordi();
   }
   new MutationObserver(allinea).observe(menu, { subtree: true, attributes: true, attributeFilter: ["class", "hidden"], childList: true, characterData: true });
+  // ponte.js mette «dentro-ponte» e «ponte-tutto» su <html> dopo l'avvio: cambia quali pagine ci sono
+  new MutationObserver(allinea).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
   const h1 = $("vista-titolo");
   if (h1) new MutationObserver(allinea).observe(h1, { childList: true, characterData: true, subtree: true });
   window.addEventListener("hashchange", () => {
@@ -207,7 +219,7 @@
     root.style.setProperty("--vv-top", Math.round(vv ? vv.offsetTop : 0) + "px");
     const tastiera = campo && altezzaPiena > 0 && h < altezzaPiena - 120;
     document.body.classList.toggle("tastiera", tastiera);
-    // la lavagna a pagina intera parte sotto la barra in alto
+    // Lavagna e le schede Terminale e Desktop VPS di Computer, a pagina intera, partono sotto la barra in alto (paginaIntera in app.js)
     if (app.classList.contains("destra-intera")) {
       const b = document.querySelector(".barra"), d = $("destra");
       if (b && d) d.style.top = b.getBoundingClientRect().height + "px";

@@ -1,0 +1,19 @@
+/* Jarvis Business: gli stili delle parti che sono solo del prodotto (2026-10-05), dopo i fogli del pannello.
+   Lingua del pannello (selettore in barra), accesso dal telefono (pagina Telefono), versione (pagina Stato).
+   Colori dai token di app.css e temi.css: seguono il tema scelto. */
+select.lingua { width: auto; flex: none; padding: 3px 6px; font-size: 12px; color: var(--testo-2);
+  background: transparent; border: 1px solid var(--linea-2); border-radius: var(--r); }
+select.lingua:hover:not(:disabled) { color: var(--testo); background: var(--hover); }
+@media (max-width: 720px) { select.lingua { font-size: 11px; padding: 2px 4px; } }
+.accesso-corpo { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.accesso-qr { background: #fff; padding: 10px; border-radius: var(--r-lg); line-height: 0; }
+.accesso-qr svg { width: 200px; height: 200px; display: block; }
+.accesso-testo { flex: 1 1 260px; min-width: 0; }
+.accesso-testo code { word-break: break-all; }
+.accesso-p .avviso-rete { color: var(--giallo); }
+.ver-testo { margin: 0 0 8px; color: var(--testo-2); }
+.ver-testo.nuova { color: var(--accento); }
+.ver-testo.attenzione { color: var(--giallo); }
+.ver-azioni button:disabled { opacity: .5; cursor: default; }
+/* la pagina Computer del prodotto ha solo la scheda «Server»: la barra delle schede non serve */
+.vista[data-vista="computer"] .pc-schede { display: none !important; }

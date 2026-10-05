@@ -1,11 +1,11 @@
-/* Command Center sul telefono e sul tablet (2026-10-03: ottimizzato in tutte le pagine).
+/* Command Center sul telefono e sul tablet (2026-10-03, richiesta dell'utente: «ottimizzata in TUTTE le pagine»).
    Si carica dopo app.css. Ogni regola sta dentro una media query:
    - fino a 820 px, e col dito senza mouse (pointer: coarse, hover: none) a ogni larghezza: telefono (barra di pagine
-     in basso che scorre, cassetti, finestre a schermo pieno). 2026-10-05 (uguale su telefono e
-     tablet): prima il tablet fra 821 e 1100 px teneva la colonna degli agenti fissa e la lavagna più stretta;
+     in basso che scorre, cassetti, finestre a schermo pieno). 2026-10-05 (l'utente: «uguale al mio S24 Ultra anche sugli
+     altri dispositivi»): prima il tablet fra 821 e 1100 px teneva la colonna degli agenti fissa e la lavagna più stretta;
    - col dito anche con un mouse (tablet ibridi): solo bersagli più grandi e niente hover.
    Sopra 820 px con il mouse non cambia niente: il desktop resta identico.
-   Gli elementi nuovi (.m-*) li crea mobile.js. */
+   Gli elementi nuovi (.m-*) li crea mobile.js; quelli del ponte (.ponte-*) ponte.js. */
 
 /* fuori dal telefono gli elementi nuovi non si vedono mai */
 .m-schede, .m-foglio, .m-foglio-velo, .m-marca { display: none; }
@@ -335,7 +335,7 @@
   .toast { bottom: calc(var(--m-sotto) + 12px); max-width: calc(100vw - 24px); }
   body.tastiera .toast { bottom: 12px; }
 
-  /* ---------------------------------------------------- barra di pagine in basso (2026-10-05)
+  /* ---------------------------------------------------- barra di pagine in basso (2026-10-05, l'utente)
      Tutte le pagine nell'ordine del desktop e in fondo «Impostazioni»; scorre col dito, la voce attiva si porta in
      vista da sola (mobile.js). Le sfumature ai lati dicono che continua. */
   .m-schede {
@@ -414,6 +414,7 @@
   /* il toast nascosto non scende sulla barra in basso nemmeno durante l'animazione */
   .toast { transform: translateX(-50%) translateY(6px); max-height: 40vh; max-height: 40dvh; overflow: hidden; }
   .toast.visibile { transform: translateX(-50%); }
+  /* dentro il ponte terminale, VPS e banco tecnico non ci sono proprio: vedi «dentro-ponte» più sotto */
 }
 
 @keyframes m-sale { from { opacity: 0; transform: translateY(24px); } }
@@ -428,6 +429,7 @@
   .chat-testa .chat-strumenti > * { order: 2; flex: none; }
   .chat-testa .modo-chat { order: 3; flex: 1 1 100%; display: flex; }
   .chat-testa .modo-chat button { flex: 1 1 0; min-height: var(--m-tocco); padding: 4px 6px; font-size: 13px; }
+  .dentro-ponte .chat-testa .modo-chat button { min-height: var(--m-tocco); }
 }
 
 /* telefono girato (basso, col dito): la lavagna prende tutta l'altezza. La barra in alto si abbassa, Sinapsi (che sta
@@ -465,3 +467,64 @@
   dialog.scheda-agente { max-height: calc(100dvh - 32px); overflow-y: auto; }
   .sa-umorismo input[type="range"] { width: 160px; }
 }
+
+/* ======================================================================= PONTE (ponte.js, solo dentro jarvis.srv…) */
+.ponte-badge { display: inline-flex; align-items: center; gap: 6px; flex: none; font-size: 12px; color: var(--testo-2);
+  padding: 4px 10px; border: 1px solid var(--linea-2); border-radius: var(--r-pill); white-space: nowrap; }
+.ponte-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--grigio); }
+.ponte-badge.acceso::before { background: var(--verde); box-shadow: 0 0 0 3px rgba(63, 162, 102, .2); }
+.ponte-badge.spento { color: #f3a3b9; border-color: rgba(227, 70, 113, .45); }
+.ponte-badge.spento::before { background: var(--rosso); }
+.ponte-badge.rete::before { background: var(--giallo); }
+.ponte-modo { font: 12px var(--mono); color: var(--testo-2); padding: 3px 10px; border: 1px solid var(--linea-2); border-radius: var(--r-pill); white-space: nowrap; }
+.ponte-modo.lavoro { color: #bff0d0; border-color: rgba(63, 162, 102, .45); background: rgba(63, 162, 102, .12); }
+.ponte-modo.approvazione { color: #f5d9a8; border-color: rgba(230, 160, 60, .45); background: rgba(230, 160, 60, .1); }
+/* 2026-10-03, coerenza del sito: <html class="dentro-ponte"> lo mette ponte.js solo quando /_ponte/stato
+   risponde 200. Le pagine che il proxy blocca (terminale, desktop VPS, banco tecnico) spariscono da tutti i
+   menu, sul telefono e sul desktop; i pulsanti con un'azione che il ponte non passa restano, spenti (ponte.js). */
+/* 2026-10-05 (l'utente: dal sito passa tutto): quando /_ponte/stato dice azioni.tutto, ponte.js mette anche «ponte-tutto»
+   e queste pagine tornano in tutti i menu (barra, «Altro», Modifica, foglio del telefono) senza «solo sul computer». */
+.dentro-ponte:not(.ponte-tutto) .menu a[data-vista="terminale"], .dentro-ponte:not(.ponte-tutto) .menu a[data-vista="vps"],
+.dentro-ponte:not(.ponte-tutto) .menu a[data-vista="tecnico"], .dentro-ponte:not(.ponte-tutto) .m-foglio-griglia [data-vista="terminale"],
+.dentro-ponte:not(.ponte-tutto) .m-foglio-griglia [data-vista="vps"], .dentro-ponte:not(.ponte-tutto) .m-foglio-griglia [data-vista="tecnico"],
+.dentro-ponte:not(.ponte-tutto) [data-term-vai], .ponte-tutto .m-solo-mac { display: none !important; }
+.dentro-ponte .solo-mac:disabled, .dentro-ponte .solo-mac[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.dentro-ponte .switch.solo-mac:disabled { filter: grayscale(1); }
+/* #modo-chat dentro il ponte: lo mostra o lo nasconde ponte.js (si vede se il ponte passa «modo_chat») */
+/* sul telefono, dentro il ponte, l'interruttore del modo sta accanto ad altoparlante e Ricomincia: più stretto,
+   e il nome dell'interlocutore si accorcia coi puntini invece di finire sotto i pulsanti */
+@media (max-width: 820px), (pointer: coarse) and (hover: none) {
+  .dentro-ponte .modo-chat { padding: 1px; gap: 0; }
+  .dentro-ponte .modo-chat button { padding: 4px 7px; font-size: 12px; min-height: 40px; }   /* bersaglio col dito ≥ 40 px */
+  .dentro-ponte .chat-strumenti { gap: 4px; }
+  .dentro-ponte .interlocutore b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+/* col dito anche in orizzontale (telefono girato, tablet): bersagli dell'interruttore del modo da 40 px */
+@media (pointer: coarse) { .dentro-ponte .modo-chat button { min-height: 40px; } }
+body.ponte #btn-term-accanto { display: none; }   /* il terminale resta sul computer; i comandi con «/» passano (comando_diretto) */
+.ponte-voce-btn { font-size: 17px; background: transparent; }
+.ponte-voce-btn[aria-pressed="true"] { color: var(--accento); border-color: var(--accento-linea); background: var(--accento-fondo); }
+.ponte-mic { width: 48px; height: 48px; min-width: 48px; border-radius: 50%; padding: 0; flex: none; display: grid; place-items: center;
+  background: var(--rialzo-2); border: 1px solid var(--linea-3); color: var(--testo); }
+.ponte-mic svg { width: 22px; height: 22px; }
+.ponte-mic.ascolta { background: var(--rosso); border-color: var(--rosso); color: #fff; box-shadow: 0 0 0 4px rgba(227, 70, 113, .25); }
+@media (prefers-reduced-motion: no-preference) { .ponte-mic.ascolta { animation: ponte-pulsa 1.2s ease-in-out infinite; } }
+@keyframes ponte-pulsa { 50% { box-shadow: 0 0 0 9px rgba(227, 70, 113, .12); } }
+.pillola .ponte-mic { align-self: flex-end; }
+.ponte-stop { flex: none; min-height: 44px; padding: 0 16px; border-radius: 22px; font-weight: 700; font-size: 15px; letter-spacing: .02em;
+  background: var(--rosso); border-color: var(--rosso); color: #fff; }
+.ponte-stop:hover { filter: brightness(1.1); background: var(--rosso); }
+.ponte-nota { display: block; margin: 6px 4px 0; font-size: 12.5px; color: var(--tenue); }
+.ponte-nota.errore { color: #f3a3b9; }
+.ponte-avviso { margin: 8px 12px 0; padding: 9px 12px; border-radius: var(--r-lg); font-size: 13.5px;
+  border: 1px solid rgba(227, 70, 113, .55); background: rgba(227, 70, 113, .1); color: #f6c0cf; }
+.ponte-velo-voce { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom)); text-align: center;
+  background: rgba(14, 14, 14, .97); }
+.ponte-velo-voce b { font-size: 20px; }
+.ponte-velo-voce p { margin: 0; color: var(--testo-2); font-size: 15px; max-width: 320px; line-height: 1.5; }
+.ponte-velo-voce .ponte-mic-grande { width: 168px; height: 168px; border-radius: 50%; display: grid; place-items: center; padding: 0;
+  background: radial-gradient(circle at 50% 35%, #2c3440, #111418); border: 2px solid var(--accento-linea); color: var(--testo);
+  box-shadow: 0 0 40px rgba(89, 156, 231, .35); }
+.ponte-velo-voce .ponte-mic-grande svg { width: 64px; height: 64px; }
+.ponte-velo-voce .ponte-scrivi { background: transparent; min-height: 44px; padding: 0 20px; font-size: 15px; }

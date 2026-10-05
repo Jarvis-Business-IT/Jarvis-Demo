@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Jarvis Command Center · Demo</title>
 <meta name="theme-color" content="#141414">
 <meta name="mobile-web-app-capable" content="yes">
@@ -11,33 +11,77 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icona-32.png">
 <link rel="icon" type="image/png" sizes="64x64" href="icona-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icona-180.png">
+<!-- temi: snippet -->
+<script>/* tema prima dei fogli di stile: niente lampo del tema sbagliato (temi.js, INTEGRA-TEMI.md) */
+(function(){var d=document.documentElement,t="claude";try{t=localStorage.getItem("cc.tema")||"claude"}catch(e){}
+if(!/^(scuro|nero|chiaro|claude|auto)$/.test(t))t="claude";d.setAttribute("data-tema",t);
+if(t==="auto"){var c=false;try{c=matchMedia("(prefers-color-scheme: light)").matches}catch(e){}d.setAttribute("data-auto",c?"chiaro":"scuro")}})();
+</script>
+<!-- /temi -->
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="mobile.css">
 <link rel="stylesheet" href="demo.css">
+<!-- telefono e tablet (2026-10-03): tutte le regole stanno in media query, sopra 820 px col mouse non cambia niente -->
+<link rel="stylesheet" href="attivita.css">
+<link rel="stylesheet" href="connessioni.css">
+<link rel="stylesheet" href="piani.css">
+<link rel="stylesheet" href="stop-chat.css">
+<link rel="stylesheet" href="barra.css">
+<link rel="stylesheet" href="dots-vivi.css">
+<!-- temi (2026-10-03, INTEGRA-TEMI.md): dopo tutti gli altri fogli, così vince -->
+<link rel="stylesheet" href="temi.css">
+<link rel="stylesheet" href="dots.css">
+<link rel="stylesheet" href="notifiche.css">
+<!-- Jarvis Business: lingua, accesso dal telefono, versione -->
+<link rel="stylesheet" href="business.css">
 <!-- DEMO: al posto del server, i dati finti (dati/*.js) e il server finto (finto.js), prima di app.js.
      finto.js mette token, appellativo, lingua e dizionario (lingue/<codice>.js) come farebbe il server vero. -->
 <script src="dati/squadra.js"></script>
 <script src="dati/stato.js"></script>
 <script src="dati/missioni.js"></script>
 <script src="finto.js"></script>
+<style>/* 2026-10-05 (l'utente): pagina «Computer» con le schede (Schermo del computer, Terminale, Desktop VPS, Server) e banco
+   tecnico dentro «Telefono». Stili minimi: le schede riusano .segmenti di app.css. */
+.vista[data-vista="computer"].attiva { grid-template-columns: minmax(0, 1fr); }
+.pc-schede { justify-self: start; flex-wrap: wrap; max-width: 100%; }
+.pannello-destra > .pc-schede { align-self: flex-start; flex: none; }
+.pc-schede button { font-size: 13px; padding: 4px 12px; }
+.pc-schede[hidden], .vista[data-vista="computer"] > .pc-scheda:not(.scheda-on) { display: none !important; }
+.vista[data-vista="computer"] > .pc-scheda { min-width: 0; }
+.vista[data-vista="computer"] > .pc-scheda.vista-schermo.attiva { padding: 0; }
+/* Schermo del computer: c'è solo dentro il ponte (computer.js mette «con-schermo» su <html>) */
+html:not(.con-schermo) .pc-schede [data-scheda="schermo"] { display: none; }
+/* dal sito senza «tutto»: il desktop della VPS e il banco tecnico non funzionano; il terminale della VPS sì (/term/vps/) */
+.dentro-ponte:not(.ponte-tutto) .pc-schede [data-scheda="vps"], .dentro-ponte:not(.ponte-tutto) .solo-tecnico { display: none !important; }
+/* dal sito il terminale è quello root della VPS (/term/vps/, Caddy): la shell del computer e i suoi comandi restano sul computer */
+.dentro-ponte [data-term="mac"], .dentro-ponte #term-accendi, .dentro-ponte #term-spegni, .dentro-ponte #term-sessione { display: none !important; }
+html:not(.dentro-ponte) .solo-ponte { display: none !important; }
+/* il pulsante «Terminale della VPS» del box Server: dal sito ora funziona (mobile.css lo nascondeva senza «tutto») */
+html.dentro-ponte:not(.ponte-tutto) [data-term-vai="vps"] { display: revert !important; }
+a.pc-btn-link { padding: 3px 9px; font-size: 12px; border: 1px solid var(--linea-2); border-radius: var(--r); color: var(--testo); text-decoration: none; }
+.pannello.solo-tecnico { border-color: rgba(208, 135, 112, .4); }
+.pannello.solo-tecnico h2 { color: var(--arancio); }
+</style>
 </head>
 <body>
 <a class="demo-banner" id="demo-banner" href="https://github.com/sponsors/AndyTrust" target="_blank" rel="noopener" translate="no"><b>Jarvis Business</b><span>Demo · dati finti · Jarvis Business completo a 2 $/mese →</span></a>
-<!-- Tre colonne.
+<!-- Layout del 24/09/2026 (stile scuro): tre colonne.
      Sinistra: agenti per spazio, gruppi a tendina, trascinabili.
      Centro: chat con Jarvis o con un agente, e le sezioni di sempre in schede.
-     Destra: lavagna degli agenti (collegamenti = dipendenze); si apre anche a pagina intera (#lavagna). -->
+     Destra: lavagna degli agenti (collegamenti = dipendenze) e desktop della VPS;
+     tutte e due si aprono anche a pagina intera (#lavagna, #vps). -->
 <div class="app" id="app">
 
 <!-- ============================================================ SINISTRA -->
 <aside class="lato" id="lato" aria-label="Agenti">
   <div class="lato-testa">
     <div class="logo"><img class="logo-img" src="logo.svg" alt="" width="22" height="22"><b class="logo-nome">Jarvis</b></div>
-    <button class="icona" id="btn-aggiorna" title="Aggiorna lo stato">↻</button>
+    <button class="icona" id="btn-aggiorna" data-solo-mac="aggiorna:tutto" title="Aggiorna lo stato">↻</button>
     <button class="icona solo-stretto" data-chiudi-lato title="Chiudi">✕</button>
   </div>
 
-  <!-- Selettore di motore: quale CLI/API risponde alla prossima chat rapida (/api/motore). -->
+  <!-- Selettore di motore (26/09/2026): quale CLI/API risponde alla prossima
+       chat. Stato in comune con la bolla del widget desktop, via /api/motore. -->
   <div class="motore" id="motore">
     <span class="motore-titolo">Motore ▾</span>
     <div class="motore-elenco" id="motore-elenco"><p class="vuoto">lettura…</p></div>
@@ -54,8 +98,8 @@
   <details class="gruppi-archiviati nascosto" id="gruppi-archiviati"><summary>Gruppi archiviati</summary><ul id="gruppi-archiviati-lista"></ul></details>
 
   <div class="lato-azioni">
-    <button class="piccolo" id="btn-nuovo-gruppo">＋ Nuovo gruppo</button>
-    <button class="piccolo" id="btn-ripristina-gruppi" title="Torna ai gruppi per spazio">Ripristina</button>
+    <button class="piccolo" id="btn-nuovo-gruppo" data-solo-mac="agente:crea_gruppo=capogruppo">＋ Nuovo gruppo</button>
+    <button class="piccolo" id="btn-ripristina-gruppi" data-solo-mac="/api/pannello/modifica" title="Torna ai gruppi per spazio">Gruppi per spazio</button>
   </div>
 
   <div class="piede">
@@ -68,8 +112,9 @@
 <div class="centro">
   <header class="barra">
     <button class="icona solo-stretto" id="apri-lato" title="Agenti">☰</button>
-    <!-- Ogni scheda ha una spia (ok, attenzione, guasto, lavora, grigia) calcolata da
-         spieSchede(). «Squadra» tiene l'hash #agenti per i segnalibri. -->
+    <!-- Ordine e spie del 26/09/2026: ogni scheda ha una spia (ok, attenzione, guasto,
+         lavora, grigia) calcolata da spieSchede() con le regole del contratto, punto 7.
+         «Squadra» è la vecchia «Catena · Lavori»: l'hash resta #agenti per i segnalibri. -->
     <nav class="schede menu" aria-label="Sezioni">
       <a href="#chat" data-vista="chat"><i class="spia grigia"></i>Chat</a>
       <a href="#home" data-vista="home"><i class="spia grigia"></i>Stato</a>
@@ -77,14 +122,16 @@
       <a href="#missioni" data-vista="missioni"><i class="spia grigia"></i>Missioni <b class="conta" id="conta-missioni"></b></a>
       <a href="#scadenze" data-vista="scadenze"><i class="spia grigia"></i>Scadenze</a>
       <a href="#memoria" data-vista="memoria"><i class="spia grigia"></i>Memoria</a>
-      <a href="#server" data-vista="server"><i class="spia grigia"></i>Server</a>
-      <a href="#telefono" data-vista="telefono"><i class="spia grigia"></i>Telefono</a>
-      <a href="#tecnico" data-vista="tecnico" class="tecnico"><i class="spia grigia"></i>Tecnico</a>
+      <a href="#telefono" data-vista="telefono" title="Accesso dal telefono, chiamate e Android"><i class="spia grigia"></i>Telefono</a>
       <a href="#lavagna" data-vista="lavagna" title="La lavagna a pagina intera"><i class="spia grigia"></i>Lavagna</a>
+      <!-- 2026-10-05 (l'utente): Schermo, Terminale, VPS e Server uniti in «Computer»; Tecnico dentro Telefono.
+           I vecchi indirizzi (#schermo, #terminale, #vps, #server, #tecnico) li riporta qui mostraVista in app.js. -->
+      <a href="#computer" data-vista="computer" title="Lo stato del server remoto"><i class="spia grigia"></i>Computer</a>
     </nav>
-    <!-- tempo reale: «● live» col flusso /api/flusso collegato, «○ sondaggio» senza -->
-    <span class="flusso" id="flusso" title="Come arrivano gli aggiornamenti">○ sondaggio</span>
-    <!-- Jarvis sempre visibile: stessa fonte dello stemma della
+    <!-- tempo reale (26/09/2026): «● live» col flusso /api/flusso collegato, «○ sondaggio» senza -->
+    <button class="piccolo nascosto" id="btn-ripristina-box" title="Rimette i box di questa pagina nell'ordine di fabbrica">↺ Ripristina box</button>
+        <span class="flusso" id="flusso" title="Come arrivano gli aggiornamenti">○ sondaggio</span>
+    <!-- Jarvis sempre visibile (mockup 26/09/2026, idea 1): stessa fonte dello stemma della
          scheda Stato (locale.voce / locale.voce_stato), aggiornato da disegnaLocale. -->
     <a class="avatar-jarvis spenta" id="avatar-jarvis" href="#home" title="Jarvis · lettura in corso" aria-live="polite">
       <span class="aj-cerchio" aria-hidden="true"><b>J</b></span><small id="aj-testo">…</small>
@@ -92,7 +139,7 @@
     <div class="stato-generale" title="Stato generale">
       <span id="pallino-generale" class="pallino"></span><span id="testo-generale">lettura in corso</span>
     </div>
-    <!-- la lingua del pannello: si salva sul server (configurazione.json, «lingua») e la pagina si ricarica -->
+    <!-- Jarvis Business: la lingua del pannello, si salva sul server (configurazione.json, «lingua») e la pagina si ricarica -->
     <select id="lingua" class="lingua" translate="no">
       <option value="it" title="Italiano">IT</option><option value="en" title="English">EN</option><option value="es" title="Español">ES</option>
       <option value="fr" title="Français">FR</option><option value="de" title="Deutsch">DE</option>
@@ -101,10 +148,12 @@
   </header>
   <h1 id="vista-titolo" class="sr">Chat</h1>
 
+
   <div id="avviso-fidata" class="avviso nascosto">
     La cartella di Jarvis non è ancora fidata: Remote Control non parte.
     <button data-azione="chat">Apri la chat e scegli «Yes, I trust this folder»</button>
   </div>
+
 
   <main>
     <!-- ------------------------------------------------ CHAT -->
@@ -115,10 +164,14 @@
           <div><b id="chat-chi">Jarvis</b><small id="chat-dove">la chat principale</small></div>
         </div>
         <div class="chat-strumenti">
-          <!-- Modo della chat: lavoro = lavora davvero, le conferme dei ganci fermano
-               l'irreversibile; lettura = plan mode. Lo legge da s.modo_chat. -->
+          <!-- Modo della chat (contratto, punto 4): lavoro = lavora davvero, la guardia dei comandi
+               blocca l'irreversibile; lettura = plan mode; approvazione (2026-10-03) = chiede il permesso
+               dell'utente prima di scrivere o lanciare comandi. Lo legge da s.modo_chat.
+               data-solo-mac="<azione>" (2026-10-03): l'azione che il pulsante chiama («tipo», «tipo:cosa», «/api/…»,
+               «GET /…», «tipo=valore» per i valori vietati); dentro il ponte ponte.js spegne il pulsante con il titolo
+               «Disponibile solo dal computer» solo se /_ponte/stato.azioni non la contiene. Sul computer non fa niente. -->
           <div class="modo-chat" id="modo-chat" role="group" aria-label="Modo della chat">
-            <button type="button" data-modo="lavoro" aria-pressed="false">lavoro</button>
+            <button type="button" data-modo="lavoro" data-solo-mac="modo_chat=lavoro" aria-pressed="false">lavoro</button>
             <button type="button" data-modo="lettura" aria-pressed="true">lettura</button>
           </div>
           <button class="piccolo" id="btn-svuota-chat" title="Nuova conversazione con lo stesso interlocutore">Ricomincia</button>
@@ -129,7 +182,7 @@
 
       <div class="compositore">
         <div class="comandi-diretti" id="comandi-diretti">
-          <button data-cmd="memoria" title="Cerca nella memoria">/memoria</button>
+          <button data-cmd="memoria" title="Cerca nella memoria del vault">/memoria</button>
           <button data-cmd="brain" title="A che punto è il progetto">/brain</button>
           <button data-cmd="lavori" title="Chi sta lavorando adesso">/lavori</button>
           <button data-cmd="verifica" title="Quadro di sincronia di tutti i progetti">/verifica</button>
@@ -145,9 +198,10 @@
     </section>
 
     <!-- ------------------------------------------------ STATO (era la Home)
-         Le cose importanti in alto. 1ª riga: cosa succede e Jarvis · 2ª: salute del pannello
-         e sentinella · 3ª: interruttori e cosa può fare Jarvis · poi i comandi rapidi, la
-         versione e la chat a voce. Le scadenze hanno la loro pagina. -->
+         Rifatta il 26/09/2026 (richiesta dell'utente): le cose importanti in alto.
+         1ª riga: cosa succede e Jarvis · 2ª: salute del pannello e sentinella ·
+         3ª: interruttori e cosa può fare Jarvis · poi i comandi rapidi e la chat a voce.
+         Il grafo sinapsi è uscito (l'utente: non serve più); le scadenze hanno la loro pagina. -->
     <section class="vista" data-vista="home">
       <div class="griglia-stato">
         <section class="pannello eventi-p" id="box-eventi">
@@ -170,8 +224,8 @@
           </div>
         </section>
 
-        <!-- Salute del pannello: ogni raccoglitore del server, ogni quanto gira,
-             quando è andato bene l'ultima volta, l'errore. ↻ lo rilancia subito. -->
+        <!-- Salute del pannello (contratto, punto 2): ogni raccoglitore del server, ogni quanto gira,
+             quando è andato bene l'ultima volta, l'errore. ↻ lo rilancia subito (punto 6). -->
         <section class="pannello salute-p" id="box-salute">
           <div class="testa-pannello">
             <h2>Salute del pannello <small id="salute-server"></small></h2>
@@ -183,19 +237,21 @@
           <ul id="salute-lista" class="salute-lista"><li class="vuoto">lettura in corso</li></ul>
         </section>
 
-        <!-- Sentinella: il giro di controllo del server, le anomalie aperte e l'ultimo rapporto
-             del modello piccolo. Senza s.sentinella: «sentinella non attiva». -->
+        <!-- Sentinella (richiesta dell'utente, 26/09/2026): il giro di controllo del server, le anomalie
+             aperte, l'ultima pulizia e l'ultimo rapporto di Jarvis (dalle 17:07 del 26/09 la sentinella
+             ripulisce da sola e chiama Jarvis in modo lavoro). Senza s.sentinella: «sentinella non attiva». -->
         <section class="pannello sentinella-p" id="box-sentinella">
           <div class="testa-pannello">
             <h2>Sentinella <small id="sent-quando"></small></h2>
             <div class="riga-sent" id="sent-interruttore" title="Accende o spegne il giro della sentinella">
-              <span>attiva</span><button class="switch" type="button" aria-label="Sentinella accesa o spenta"></button>
+              <span>attiva</span><button class="switch" type="button" data-solo-mac="sentinella:acceso" aria-label="Sentinella accesa o spenta"></button>
             </div>
           </div>
           <div class="comandi-diretti sezione-chiedi">
-            <button id="sent-giro" type="button">Giro adesso</button>
+            <button id="sent-giro" type="button" data-solo-mac="sentinella:giro">Giro adesso</button>
             <button data-chiedi="Sistema queste anomalie della sentinella: dimmi cosa sono, cosa fai e cosa aspetta il mio sì." data-box="sentinella">Chiedi a Jarvis: sistema queste anomalie</button>
           </div>
+          <small id="sent-pulizia" class="sent-pulizia"></small>
           <ul id="sent-anomalie" class="sent-anomalie"><li class="vuoto">lettura in corso</li></ul>
           <details class="sent-rapporto" id="sent-rapporto-box">
             <summary>Ultimo rapporto <small id="sent-rapporto-quando"></small></summary>
@@ -232,8 +288,8 @@
           <div class="azioni-riga" id="collegamenti"></div>
         </section>
 
-        <!-- La versione di Jarvis: «Aggiorna» quando ne esce una nuova, «Torna indietro» se c'è una
-             copia di prima. Da s.aggiornamento; il lavoro si vede in Squadra › Lavori. -->
+        <!-- Repository GitHub (01/10/2026): elenco da /api/github, in tre gruppi come nella guida
+             «Linea unica dei repo»: Jarvis (Privato e derivati), prodotti in vendita, altri. Sola lettura. -->
         <section class="pannello largo versione-p" id="box-versione">
           <h2>Versione <small id="ver-controllato"></small></h2>
           <p id="ver-testo" class="ver-testo">lettura in corso</p>
@@ -247,22 +303,29 @@
         <!-- la chat a voce non è un doppione della Chat: è la conversazione della voce di Jarvis -->
         <section class="pannello largo chat-voce-p">
           <h2>Chat a voce <small>stessa conversazione della voce · l'ultima battuta sta in cima</small></h2>
+          <p id="chat-voce-fonte" class="chat-voce-fonte"></p>
+          <!-- 2026-10-05 (l'utente): gli stessi tasti della chat principale. 🎤 = dettato nel campo (dettato.js);
+               📞 = parla: sul computer l'ascolto della voce di Jarvis (backtalk), sul sito una conversazione dal browser
+               (voce-chat.js) -->
           <form id="form-chat-voce" class="riga-form chat-voce-form">
             <input id="chat-voce-testo" type="text" placeholder="Scrivi nella chat a voce" autocomplete="off">
-            <button type="submit" class="primario">Manda</button>
+            <button type="button" id="chat-voce-mic" class="cv-tondo cv-mic" title="Detta il messaggio (non parte da solo: rileggi e premi Manda)" aria-label="Detta il messaggio" aria-pressed="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button>
+            <button type="button" id="chat-voce-parla" class="cv-tondo cv-parla" title="Parla con Jarvis a voce" aria-label="Parla con Jarvis a voce" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></button>
+            <button type="submit" class="primario" data-solo-mac="chat_voce_manda">Manda</button>
           </form>
+          <small id="chat-voce-nota" class="chat-voce-nota" role="status" aria-live="polite" hidden></small>
           <div id="chat-voce-attesa" class="nascosto"></div>
           <div id="chat-messages" class="chat-voce-box"></div>
         </section>
       </div>
     </section>
 
-    <!-- ------------------------------------------------ SCADENZE
-         Tre colonne da /api/scadenze: registro di direzione (se c'è in configurazione), personali,
+    <!-- ------------------------------------------------ SCADENZE (26/09/2026, richiesta dell'utente)
+         Tre colonne da /api/scadenze: Azienda Uno (registro del CEO), personali (Gmail di il titolare),
          da ricordare (caselle di Jarvis). La casella chiude, «Annulla» riapre per 10 s. -->
     <section class="vista vista-scadenze" data-vista="scadenze">
-      <!-- Controllo e pulizia: Jarvis dice quali sono già fatte, l'utente sceglie e chiude in blocco;
-           l'archivio degli ultimi 30 giorni si può riaprire. -->
+      <!-- Controllo e pulizia (contratto, punto 12, 26/09/2026 sera): Jarvis dice quali sono già fatte,
+           l'utente sceglie e chiude in blocco; l'archivio degli ultimi 30 giorni si può riaprire. -->
       <section class="pannello scad-pulizia" id="box-scad-pulizia">
         <div class="testa-pannello">
           <h2>Controllo e pulizia <small id="scad-riassunto"></small></h2>
@@ -274,7 +337,7 @@
         <div class="scad-riga-comandi">
           <label>Fonte <select id="scad-fonte" aria-label="Fonte da controllare">
             <option value="tutte">tutte</option><option value="registro">Registro di direzione</option><option value="personali">Personali</option><option value="task">Da ricordare</option></select></label>
-          <button type="button" id="scad-controllo">Chiedi a Jarvis: quali sono già fatte?</button>
+          <button type="button" id="scad-controllo" data-solo-mac="scadenze:controllo">Chiedi a Jarvis: quali sono già fatte?</button>
           <span id="scad-controllo-stato" class="nota"></span>
         </div>
         <div class="scad-riga-comandi scad-filtri">
@@ -284,7 +347,7 @@
           <label>fonte <select id="f-fonte"><option value="">tutte</option><option value="registro">Registro di direzione</option><option value="personali">Personali</option><option value="task">Da ricordare</option></select></label>
           <button type="button" class="piccolo" id="scad-sel-visibili">Seleziona le visibili</button>
           <button type="button" class="piccolo" id="scad-sel-nessuna">Nessuna</button>
-          <button type="button" class="piccolo pericolo" id="scad-chiudi-sel">Chiudi le selezionate (<b id="scad-n-sel">0</b>)</button>
+          <button type="button" class="piccolo pericolo" id="scad-chiudi-sel" data-solo-mac="scadenze:chiudi_molte">Chiudi le selezionate (<b id="scad-n-sel">0</b>)</button>
         </div>
         <div class="scad-proposte nascosto" id="scad-proposte">
           <h3>Proposte da Jarvis <small id="scad-proposte-quando"></small></h3>
@@ -318,17 +381,17 @@
         <h2>Da ricordare <small>caselle di Jarvis</small></h2>
         <form class="scad-aggiungi" data-fonte="task">
           <input name="testo" placeholder="＋ aggiungi da ricordare" autocomplete="off" aria-label="Nuova cosa da ricordare">
-          <button type="submit" class="piccolo">Aggiungi</button>
+          <button type="submit" class="piccolo" data-solo-mac="scadenze:aggiungi">Aggiungi</button>
         </form>
         <ul class="scad-lista" id="scad-task"><li class="vuoto">lettura in corso</li></ul>
       </section>
       <div class="scad-annulla nascosto" id="scad-annulla" role="status">
-        <span id="scad-annulla-testo"></span><button type="button" class="piccolo" id="scad-annulla-btn">Annulla ultima chiusura</button>
+        <span id="scad-annulla-testo"></span><button type="button" class="piccolo" id="scad-annulla-btn" data-solo-mac="scadenze:riapri">Annulla ultima chiusura</button>
       </div>
     </section>
 
     <!-- ------------------------------------------------ SQUADRA (era «Catena · Lavori»)
-         Rifatta il 26/09/2026 (richiesta): tutto quello che dice chi lavora sta qui.
+         Rifatta il 26/09/2026 (richiesta dell'utente): tutto quello che dice chi lavora sta qui.
          Ordine: chi lavora ora, le chiavi e le anomalie del portiere, i lavori col dettaglio,
          la squadra per spazio, le verifiche del CRM, le sessioni aperte. Le scadenze stanno
          in Stato, gli «Agenti delle missioni» in Missioni. -->
@@ -368,7 +431,7 @@
           <div class="testa-pannello">
             <h2>Lavori <small id="lavori-conta"></small></h2>
             <button class="piccolo" data-chiedi="Cosa è andato storto nei lavori in errore? Dimmi la causa e cosa propone di fare." data-box="lavori" title="Chiedi a Jarvis dei lavori in errore">Chiedi a Jarvis</button>
-            <button class="piccolo" id="lavori-pulisci" title="Toglie dalla lista i lavori chiusi (i log restano in lavori/)">Pulisci i chiusi</button>
+            <button class="piccolo" id="lavori-pulisci" data-solo-mac="pulisci_lavori" title="Toglie dalla lista i lavori chiusi (i log restano in lavori/)">Pulisci i chiusi</button>
           </div>
           <div class="filtri" id="lavori-filtri" role="tablist">
             <button data-filtro="" class="attivo">Tutti</button>
@@ -428,7 +491,7 @@
         <div class="agente-form">
           <select id="agente-scelto"></select>
           <input id="agente-richiesta" placeholder="Richiesta (vuoto = verifica di routine)">
-          <button id="btn-agente" class="primario">Avvia</button>
+          <button id="btn-agente" class="primario" data-solo-mac="agente">Avvia</button>
         </div>
         <p id="agente-desc" class="nota"></p>
       </section>
@@ -455,8 +518,8 @@
             <label>Esperti in parallelo <input id="missione-max" type="number" min="1" max="10" value="5"></label>
             <span class="modalita">Modalità:
               <label><input type="radio" name="missione-modo" value="lettura" checked> lettura</label>
-              <label><input type="radio" name="missione-modo" value="lavoro"> lavoro</label></span>
-            <button type="submit" class="primario">Affida</button>
+              <label><input type="radio" name="missione-modo" value="lavoro" data-solo-mac="missione=lavoro"> lavoro</label></span>
+            <button type="submit" class="primario" data-solo-mac="missione">Affida</button>
           </div>
           <small class="nota" id="missione-nota-modo">Lettura: nessuno modifica niente, si scrive solo il report. Lavoro: le modifiche ai file partono, l'irreversibile aspetta il tuo Sì.</small>
         </form>
@@ -491,7 +554,7 @@
         <h3>Sincronia <small id="mem-battito" class="battito">—</small></h3>
         <table id="mem-progetti" class="progetti"><tbody></tbody></table>
         <div class="elenco-pulsanti">
-          <button id="btn-verifica-memoria">Verifica ora</button>
+          <button id="btn-verifica-memoria" data-solo-mac="aggiorna:memoria">Verifica ora</button>
         </div>
         <p id="mem-comando" class="comando" hidden></p>
         <h3>Da fare</h3>
@@ -499,8 +562,15 @@
       </section>
     </section>
 
-    <!-- ------------------------------------------------ SERVER -->
-    <section class="vista" data-vista="server">
+    <!-- ------------------------------------------------ COMPUTER (2026-10-05: Schermo + Terminale + VPS + Server)
+         Le schede «Terminale» e «Desktop VPS» sono i pannelli a pagina intera della colonna destra (#destra):
+         la barra delle schede #pc-schede è una sola e app.js (pcSchede) la sposta in cima alla scheda aperta.
+         «Schermo del computer» la riempie computer.js, solo dentro il ponte. -->
+    <section class="vista" data-vista="computer">
+      <nav class="segmenti pc-schede" id="pc-schede" role="tablist" aria-label="Schede del Computer">
+        <button type="button" role="tab" data-scheda="server" aria-selected="false" title="Stato del server remoto: siti, contenitori, disco e RAM"><i class="spia grigia"></i>Server</button>
+      </nav>
+      <div class="pc-scheda" data-scheda="server">
       <section class="pannello vps" id="box-vps">
         <h2 id="vps-titolo">Server remoto <small id="vps-letto"></small></h2>
         <div class="comandi-diretti sezione-chiedi">
@@ -512,6 +582,11 @@
         <div class="barre"><label>Disco <meter id="vps-disco" min="0" max="100" low="70" high="85" optimum="20"></meter> <span id="vps-disco-t"></span></label>
           <label>RAM <meter id="vps-ram" min="0" max="100" low="70" high="85" optimum="20"></meter> <span id="vps-ram-t"></span></label></div>
       </section>
+      <!-- Il terminale web pubblico (ttyd, jarvis-terminal) è stato tolto il 24/09/2026: era una shell
+           da root raggiungibile da internet senza password. Dal 26/09/2026 il terminale sta nella
+           scheda «Terminale»: ttyd gira sul computer su un socket UNIX, niente porte, e la VPS si
+           raggiunge con un ssh in uscita. -->
+      </div>
     </section>
 
     <!-- ------------------------------------------------ TELEFONO -->
@@ -563,7 +638,7 @@
         <h3>Ultime chiamate</h3>
         <ul id="tel-chiamate" class="lista-lavori"></ul>
       </section>
-      <section class="pannello android">
+      <section class="pannello android" id="telefono-android">
         <h2>Android <small>il tuo telefono</small></h2>
         <p id="and-stato" class="grande">—</p>
         <ul id="and-info" class="lista-lavori"></ul>
@@ -578,60 +653,38 @@
       </section>
     </section>
 
-    <!-- ------------------------------------------------ TECNICO -->
-    <section class="vista vista-tecnica" data-vista="tecnico">
-      <section class="pannello tec-app">
-        <h2>App Android <small>il banco di collaudo</small></h2>
-        <div class="comandi-diretti sezione-chiedi">
-          <button data-chiedi="Leggi la diagnosi tecnica dal telefono e dimmi se c'è qualcosa che non va." data-box="tecnico">Chiedi a Jarvis: leggi la diagnosi</button>
-        </div>
-        <p id="tec-stato" class="grande">—</p>
-        <dl id="tec-schede" class="schede"></dl>
-        <div class="riga-int" data-tec="debug">
-          <span>Modo tecnico sul telefono</span>
-          <small>da spento l'app non manda nessuna diagnosi fuori dal telefono</small>
-          <button class="switch"></button>
-        </div>
-        <div class="azioni-riga">
-          <button data-tec="riavvia">Riavvia l'app</button>
-          <button data-tec="ricarica">Rileggi il telefono</button>
-        </div>
-      </section>
-      <section class="pannello tec-log">
-        <h2>Diagnosi dal telefono</h2>
-        <pre id="tec-log" class="uscita">—</pre>
-      </section>
-    </section>
   </main>
 </div>
 
 <!-- ============================================================ DESTRA -->
-<aside class="destra" id="destra" aria-label="Lavagna">
+<aside class="destra" id="destra" aria-label="Lavagna e anteprima">
   <!-- Lavagna: si trascinano gli agenti dalla sinistra; il pallino a destra di una scheda
        si tira su un'altra per dire «dipende da». Doppio clic sul fondo = nota. -->
   <section class="pannello-destra attivo" data-pannello="lavagna">
     <div class="lavagna-barra">
       <b id="lav-titolo" class="lav-titolo"></b>
-      <button class="piccolo" id="lav-nota">＋ Nota</button>
-      <button class="piccolo" id="lav-tutta-catena" title="Tu, Jarvis, un capogruppo per progetto e la sua squadra sotto, dall'alto in basso">Tutta la catena</button>
-      <button class="piccolo" id="lav-ordina" title="Metti in ordine le schede">Ordina</button>
+      <button class="piccolo" id="lav-nota" data-solo-mac="/api/pannello/modifica">＋ Nota</button>
+      <button class="piccolo" id="lav-tutta-catena" data-solo-mac="/api/pannello/modifica" title="Tu, Jarvis, un capogruppo per progetto e la sua squadra sotto, dall'alto in basso">Tutta la catena</button>
+      <button class="piccolo" id="lav-ordina" data-solo-mac="/api/pannello/modifica" title="Metti in ordine le schede">Ordina</button>
       <button class="piccolo" id="lav-centra" title="Riporta al centro">Centra</button>
-      <button class="piccolo pericolo" id="lav-togli" disabled title="Togli la scheda o il collegamento scelto">Togli</button>
-      <!-- modo dimostrazione (per un video o una presentazione): la lavagna non scrive niente fuori
+      <button class="piccolo pericolo" id="lav-togli" data-solo-mac="/api/pannello/modifica" disabled title="Togli la scheda o il collegamento scelto">Togli</button>
+      <!-- modo dimostrazione (26/09/2026, per il video dell'utente): la lavagna non scrive niente fuori
            dalla pagina, salvo le lavagne «demo-». Preset e animazione si vedono solo in questo modo. -->
-      <button class="piccolo" id="lav-demo" aria-pressed="false" title="Modo dimostrazione: niente profili, niente avvisi, niente salvataggi fuori dalle lavagne demo">Dimostrazione</button>
-      <button class="piccolo solo-demo" id="lav-demo-squadra" title="Costruisce da zero la lavagna demo-squadra, fatta solo di note">Squadra dimostrativa</button>
-      <button class="piccolo solo-demo demo-via" id="lav-demo-via">▶ Fai partire la dimostrazione</button>
-      <button class="piccolo" id="lav-nuovo-progetto" title="Un gruppo nuovo: progetto, cartella, memoria e capogruppo">＋ Nuovo gruppo</button>
-      <button class="piccolo" id="lav-nuovo-agente" title="Crea un agente nuovo, sotto il suo capogruppo">＋ Nuovo agente</button>
+      <button class="piccolo" id="lav-demo" data-solo-mac="/api/pannello/modifica" aria-pressed="false" title="Modo dimostrazione: niente profili, niente Telegram, niente salvataggi fuori dalle lavagne demo">Dimostrazione</button>
+      <button class="piccolo solo-demo" id="lav-demo-squadra" data-solo-mac="/api/pannello/modifica" title="Costruisce da zero la lavagna demo-squadra, fatta solo di note">Squadra dimostrativa</button>
+      <button class="piccolo solo-demo demo-via" id="lav-demo-via" data-solo-mac="/api/pannello/modifica">▶ Fai partire la dimostrazione</button>
+      <button class="piccolo" id="lav-nuovo-progetto" data-solo-mac="agente:crea_gruppo=capogruppo" title="Un gruppo nuovo: progetto, cartella, memoria e capogruppo">＋ Nuovo gruppo</button>
+      <button class="piccolo" id="lav-nuovo-agente" data-solo-mac="agente:crea" title="Crea un agente nuovo, sotto il suo capogruppo">＋ Nuovo agente</button>
       <button class="piccolo" id="lav-allineamento" title="I fili della lavagna e i «Comunica con» dei profili dicono la stessa cosa?">Profili: …</button>
+      <button class="piccolo" id="lav-verifica" title="Controlla che gruppi, CEO, agenti, tombe, Stato e fili tornino, e dice di chi è il problema">Controlla lavagna</button>
+      <button class="piccolo" id="lav-guida" title="Per ogni operazione: cosa fa, cosa scrive, come verifichi e di chi è il problema se non va">Guida</button>
       <select id="lav-spazio-catena" class="piccolo" aria-label="Spazio da aggiornare"><option value="tutti">tutti gli spazi</option></select>
-      <button class="piccolo" id="lav-aggiorna-agenti" title="Una missione: ogni capogruppo rilegge e corregge i profili della sua squadra (spazio scelto accanto)">Aggiorna tutti</button>
-      <button class="piccolo" id="lav-aggiorna-ultime" disabled title="Una missione solo sugli agenti toccati dalle modifiche non ancora verificate">Aggiorna ultime modifiche (<b id="lav-n-mod">0</b>)</button>
+      <button class="piccolo" id="lav-aggiorna-agenti" data-solo-mac="agente:aggiorna_catena" title="Una missione: ogni capogruppo rilegge e corregge i profili della sua squadra (spazio scelto a sinistra)">Aggiorna tutti</button>
+      <button class="piccolo" id="lav-aggiorna-ultime" data-solo-mac="agente:aggiorna_catena" disabled title="Una missione solo sugli agenti toccati dalle modifiche non ancora verificate">Aggiorna ultime modifiche (<b id="lav-n-mod">0</b>)</button>
       <small id="lav-catena-conta" class="lav-catena-conta"></small>
-      <small id="lav-stato" class="lav-stato">salvata</small>
+      <small id="lav-stato" class="lav-stato" aria-live="polite">caricamento…</small>
     </div>
-    <!-- Sinapsi: chi comunica con chi, le ultime 60 -->
+    <!-- Sinapsi (contratto, punto 11, 26/09/2026 sera): chi comunica con chi, le ultime 60 -->
     <details class="lav-sinapsi" id="lav-sinapsi">
       <summary>Sinapsi <small id="sinapsi-conta">nessuna comunicazione ancora</small></summary>
       <ol class="sinapsi-lista" id="sinapsi-lista"></ol>
@@ -644,6 +697,8 @@
       <div class="lav-mondo" id="lav-mondo">
         <svg class="lav-fili" id="lav-fili"><defs>
           <marker id="freccia" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="freccia-andata" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#599ce7"/></marker>
+          <marker id="freccia-ritorno" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3fa266"/></marker>
         </defs></svg>
       </div>
       <p class="lav-vuota" id="lav-vuota">Trascina qui un agente dalla colonna di sinistra.<br>Tira il pallino di una scheda su un'altra per collegarle.</p>
@@ -662,17 +717,19 @@
       <div><b id="sa-nome">—</b><small id="sa-dove">—</small></div>
       <button type="button" class="icona chiudi-dialog" value="chiudi" title="Chiudi">✕</button></header>
     <h3>Il profilo vero, quello che legge Claude Code</h3>
-    <label class="sa-riga">Descrizione <textarea id="sa-vdescr" rows="5" maxlength="2000" placeholder="cosa fa, quando si usa"></textarea></label>
+    <label class="sa-riga">Descrizione <textarea id="sa-vdescr" data-solo-mac="/api/agente-profilo=istruzioni" rows="5" maxlength="2000" placeholder="cosa fa, quando si usa"></textarea></label>
     <div class="sa-campi">
       <label>Modello <select id="sa-vmodello"><option value="haiku">haiku</option><option value="sonnet">sonnet</option><option value="opus">opus</option></select></label>
-      <label>Strumenti <input id="sa-vstrumenti" placeholder="Bash, Read, Grep, ..."></label>
+      <label>Strumenti <input id="sa-vstrumenti" data-solo-mac="/api/agente-profilo=istruzioni" placeholder="Bash, Read, Grep, ..."></label>
     </div>
-    <!-- tono, umorismo, attivo e «comunica con»: stanno nel profilo vero -->
-    <label class="sa-riga">Tono <input id="sa-vtono" maxlength="120" placeholder="diretto, ironico ma misurato"></label>
+    <!-- tono, umorismo, attivo e «comunica con» (contratto, punto 13, 26/09/2026 18:10): stanno nel profilo vero -->
+    <label class="sa-riga">Tono <input id="sa-vtono" data-solo-mac="/api/agente-profilo=istruzioni" maxlength="120" placeholder="diretto, ironico ma misurato"></label>
     <div class="sa-campi sa-umorismo">
       <label>Umorismo <input id="sa-vumor" type="range" min="0" max="3" step="1" value="1"></label>
       <b id="sa-vumor-t">misurato</b>
-      <div class="sa-attivo"><span>Attivo</span><button type="button" class="switch" id="sa-attivo" aria-pressed="true" aria-label="Agente attivo o spento"></button><small id="sa-attivo-t"></small></div>
+      <label>Serietà <input id="sa-vseri" type="range" min="0" max="3" step="1" value="2"></label>
+      <b id="sa-vseri-t">professionale</b>
+      <div class="sa-attivo"><span>Attivo</span><button type="button" class="switch" id="sa-attivo" data-solo-mac="agente:attivo" aria-pressed="true" aria-label="Agente attivo o spento"></button><small id="sa-attivo-t"></small></div>
     </div>
     <h3>Comunica con <small>scritto nel profilo</small></h3>
     <div id="sa-comunica" class="chip-lista"></div>
@@ -689,20 +746,33 @@
     </div>
     <h3>Dipende da</h3>
     <div id="sa-dipende" class="chip-lista"></div>
+    <!-- Attività dell'agente (proposta 2026-10-02): richieste ricevute e inviate, dal registro attivita/*.jsonl -->
+    <h3>Attività <small id="sa-att-conta">—</small></h3>
+    <div class="sa-att-barra">
+      <span class="pallino grigio" id="sa-att-pallino"></span><b id="sa-att-stato">—</b>
+      <select id="sa-att-verso" class="piccolo" aria-label="Quali richieste"><option value="">ricevute e inviate</option><option value="ricevuta">solo ricevute</option><option value="inviata">solo inviate</option></select>
+      <label class="sa-att-filtro"><input type="checkbox" id="sa-att-errori"> solo errori e avvisi</label>
+    </div>
+    <ul class="sa-att-avvisi" id="sa-att-avvisi"></ul>
+    <div class="sa-att-tabella">
+      <table id="sa-att"><thead><tr><th>Ora</th><th></th><th>Con</th><th>Richiesta</th><th>Stato</th><th>Durata</th><th></th></tr></thead>
+        <tbody id="sa-att-righe"><tr><td colspan="7" class="nota">lettura…</td></tr></tbody></table>
+    </div>
     <footer>
       <button type="button" class="primario" id="sa-chiedi">Chatta con l'agente</button>
-      <button type="button" id="sa-lavagna">Metti in lavagna</button>
+      <button type="button" id="sa-lavagna" data-solo-mac="/api/pannello/modifica">Metti in lavagna</button>
       <button type="button" id="sa-aggiorna" title="Jarvis aggiorna profilo e scheda di questo agente secondo lavagna e memoria">Manda a Jarvis: aggiorna questo agente</button>
-      <button type="button" id="sa-sotto" title="Un agente nuovo che riporta a questo">＋ Sotto-agente</button>
-      <button type="button" class="pericolo" id="sa-togli" title="Sposta il profilo nell'archivio del progetto: non si cancella, si può ripristinare">Togli (archivia)</button>
-      <button type="button" class="pericolo" id="sa-togli-gruppo" title="Archivia gli agenti di tutto il progetto e lo toglie dagli spazi: cartella e memoria restano">Togli gruppo (archivia)</button>
-      <button type="submit" value="salva">Salva</button>
+      <button type="button" id="sa-sotto" data-solo-mac="agente:crea" title="Un agente nuovo che riporta a questo">＋ Sotto-agente</button>
+      <button type="button" class="pericolo" id="sa-togli" data-solo-mac="agente:togli" title="Sposta il profilo nell'archivio del progetto: non si cancella, si può ripristinare">Togli (archivia)</button>
+      <button type="button" class="pericolo" id="sa-togli-gruppo" data-solo-mac="agente:togli_gruppo" title="Archivia gli agenti di tutto il progetto e lo toglie dagli spazi: cartella e memoria restano">Togli gruppo (archivia)</button>
+      <button type="submit" value="salva" data-solo-mac="/api/agente-profilo">Salva</button>
     </footer>
   </form>
 </dialog>
 
-<!-- scheda gruppo: tutto il gruppo in un posto solo, nome compreso; i singoli agenti si
-     modificano dalla loro scheda (Aggiorna con), non doppiando i campi qui. -->
+<!-- scheda gruppo (richiesta dell'utente, 27/09/2026): tutto il gruppo in un posto solo, nome
+     compreso; i singoli agenti si modificano dalla loro scheda (Aggiorna con), non doppiando i
+     campi qui. -->
 <dialog id="scheda-gruppo" class="scheda-agente">
   <form method="dialog" id="form-scheda-gruppo">
     <header><span class="avatar grande">▦</span>
@@ -715,15 +785,16 @@
     <div id="sg-squadra" class="gruppo-lista sg-squadra"></div>
     <footer>
       <button type="button" id="sg-lavagna">▦ Apri nella lavagna</button>
-      <button type="button" id="sg-nuovo-agente">＋ Nuovo agente</button>
-      <button type="button" class="pericolo" id="sg-togli" title="Gli agenti tornano al loro spazio: i profili non si toccano">✕ Togli gruppo</button>
-      <button type="submit" value="salva" class="primario">Salva</button>
+      <button type="button" id="sg-nuovo-agente" data-solo-mac="agente:crea">＋ Nuovo agente</button>
+      <button type="button" class="pericolo" id="sg-togli" data-solo-mac="agente:togli_gruppo" title="Gruppo personalizzato: gli agenti tornano al loro spazio. Gruppo-spazio: stesso dialogo della lavagna (sospendi o archivia)">✕ Togli gruppo</button>
+      <button type="submit" value="salva" class="primario" data-solo-mac="agente:rinomina_spazio">Salva</button>
     </footer>
   </form>
 </dialog>
 
-<!-- scheda casa: esecutore e ricercatore-web sono agenti fissi di Jarvis, fuori da ogni progetto.
-     Stessi campi della scheda agente, dialog a parte per non toccare quella. -->
+<!-- scheda casa (richiesta dell'utente, 27/09/2026): esecutore e ricercatore-web sono agenti veri di
+     Jarvis, fuori da ogni progetto (~/.claude/agents/). Stessi campi della scheda agente, dialog
+     a parte per non toccare quella (usata ovunque, testata). -->
 <dialog id="scheda-casa" class="scheda-agente">
   <form method="dialog" id="form-scheda-casa">
     <header><span class="avatar grande" id="sc-avatar">?</span>
@@ -736,12 +807,13 @@
     </div>
     <label class="sa-riga">Tono <input id="sc-tono" maxlength="120" placeholder="diretto, ironico ma misurato"></label>
     <div class="sa-campi sa-umorismo"><label>Umorismo <input id="sc-umor" type="range" min="0" max="3" step="1" value="1"></label><b id="sc-umor-t">misurato</b></div>
+    <div class="sa-campi sa-umorismo"><label>Serietà <input id="sc-seri" type="range" min="0" max="3" step="1" value="2"></label><b id="sc-seri-t">professionale</b></div>
     <p class="nota">Non è dentro nessun progetto: risponde solo a Jarvis, non ha capogruppo né «Comunica con».</p>
-    <footer><button type="submit" value="salva" class="primario">Salva</button></footer>
+    <footer><button type="submit" value="salva" class="primario" data-solo-mac="agente:salva_casa">Salva</button></footer>
   </form>
 </dialog>
 
-<!-- nuovo agente: nasce da un modello di profilo, sotto il suo capogruppo -->
+<!-- nuovo agente (contratto, punto 13): nasce da un modello di profilo, sotto il suo capogruppo -->
 <dialog id="nuovo-agente" class="scheda-agente">
   <form method="dialog" id="form-nuovo-agente">
     <header><span class="avatar grande">＋</span><div><b>Nuovo agente</b><small>il profilo nasce nella cartella del progetto</small></div>
@@ -757,38 +829,49 @@
       <label>Tono <input id="na-tono" maxlength="120" placeholder="diretto, ironico ma misurato"></label>
     </div>
     <div class="sa-campi sa-umorismo"><label>Umorismo <input id="na-umor" type="range" min="0" max="3" step="1" value="1"></label><b id="na-umor-t">misurato</b></div>
+    <div class="sa-campi sa-umorismo"><label>Serietà <input id="na-seri" type="range" min="0" max="3" step="1" value="2"></label><b id="na-seri-t">professionale</b></div>
     <p class="nota" id="na-nota"></p>
-    <footer><button type="submit" value="crea" class="primario" id="na-crea">Crea l'agente</button></footer>
+    <footer><button type="submit" value="crea" class="primario" id="na-crea" data-solo-mac="agente:crea">Crea l'agente</button></footer>
   </form>
 </dialog>
 
-<!-- nuovo gruppo: progetto, cartella, memoria e capogruppo -->
+<!-- nuovo gruppo (contratto, punto 14): progetto, cartella, memoria e capogruppo -->
 <dialog id="nuovo-gruppo" class="scheda-agente">
   <form method="dialog" id="form-nuovo-gruppo">
-    <header><span class="avatar grande">▦</span><div><b>Nuovo gruppo</b><small>una cartella di progetto, la sua memoria e il capogruppo</small></div>
+    <header><span class="avatar grande">▦</span><div><b>Nuovo gruppo</b><small>prima la cartella, poi gli agenti</small></div>
       <button type="button" class="icona chiudi-dialog" value="chiudi" title="Chiudi">✕</button></header>
     <div class="sa-campi">
-      <label>Spazio <select id="ng-spazio"></select></label>
       <label>Nome <input id="ng-nome" maxlength="60" placeholder="Eventi privati" required></label>
+      <label>Spazio <select id="ng-spazio"></select></label>
     </div>
-    <div class="sa-campi">
-      <label>Id <input id="ng-id" maxlength="40" placeholder="eventi-privati" pattern="[a-z0-9]+(-[a-z0-9]+)*" required></label>
-      <label>Capogruppo <input id="ng-capo" maxlength="60" placeholder="ceo-eventi-privati" pattern="[a-z0-9]+(-[a-z0-9]+)*"></label>
-    </div>
-    <label class="sa-riga">Cartella
+    <label class="sa-riga">Cartella del gruppo <small class="nota">una che c'è già, oppure creane una nuova dalla finestra del computer (tasto «Nuova cartella»)</small>
+      <span style="display:flex;gap:6px"><input id="ng-base" style="flex:1" placeholder="nessuna scelta: nasce nella cartella dei progetti"><button type="button" id="ng-sfoglia" data-solo-mac="GET /api/scegli-cartella" class="secondario">Scegli o crea…</button></span>
+    </label>
+    <label class="sa-riga">Cosa faccio con la cartella scelta
       <select id="ng-cartella">
-        <option value="">nuova, dal nome qui sopra</option>
+        <option value="@base">la collego così com'è (è lei il gruppo)</option>
+        <option value="">ne creo una nuova col nome del gruppo, dentro quella scelta</option>
       </select>
       <small class="nota" id="ng-cartella-nota"></small>
     </label>
-    <label class="sa-riga">Descrizione del capogruppo <textarea id="ng-descr" rows="3" maxlength="2000" placeholder="guida la squadra di …, verifica il lavoro degli specialisti" required></textarea></label>
-    <div class="sa-campi">
-      <label>Modello <select id="ng-modello"><option value="haiku">haiku</option><option value="sonnet" selected>sonnet</option><option value="opus">opus</option></select></label>
-      <label>Tono <input id="ng-tono" maxlength="120" placeholder="diretto, da capo squadra"></label>
+    <small class="nota">Il gruppo nasce sempre col suo CEO (ceo-nome-del-progetto): legge la cartella, crea la squadra sotto di sé e la tiene allineata al goal. Poi tu modifichi, aggiungi o togli dove vuoi.</small>
+    <label class="sa-riga" hidden><span><input type="checkbox" id="ng-crea-capo" checked> Assegna il CEO del gruppo</span></label>
+    <div id="ng-capo-campi">
+      <label class="sa-riga" hidden><span><input type="checkbox" id="ng-squadra" checked> Il CEO legge la cartella e crea i suoi sottoagenti (poi li modifichi, aggiungi o togli tu)</span></label>
+      <div class="sa-campi">
+        <label>Id <input id="ng-id" maxlength="40" placeholder="eventi-privati" pattern="[a-z0-9]+(-[a-z0-9]+)*"></label>
+        <label>Capogruppo <input id="ng-capo" maxlength="60" placeholder="ceo-eventi-privati" pattern="[a-z0-9]+(-[a-z0-9]+)*"></label>
+      </div>
+      <label class="sa-riga">Descrizione del capogruppo <textarea id="ng-descr" rows="3" maxlength="2000" placeholder="guida la squadra di …, verifica il lavoro degli specialisti"></textarea></label>
+      <div class="sa-campi">
+        <label>Modello <select id="ng-modello"><option value="haiku">haiku</option><option value="sonnet" selected>sonnet</option><option value="opus">opus</option></select></label>
+        <label>Tono <input id="ng-tono" maxlength="120" placeholder="diretto, da capo squadra"></label>
+      </div>
+      <div class="sa-campi sa-umorismo"><label>Umorismo <input id="ng-umor" type="range" min="0" max="3" step="1" value="1"></label><b id="ng-umor-t">misurato</b></div>
+      <div class="sa-campi sa-umorismo"><label>Serietà <input id="ng-seri" type="range" min="0" max="3" step="1" value="2"></label><b id="ng-seri-t">professionale</b></div>
     </div>
-    <div class="sa-campi sa-umorismo"><label>Umorismo <input id="ng-umor" type="range" min="0" max="3" step="1" value="1"></label><b id="ng-umor-t">misurato</b></div>
     <p class="nota" id="ng-nota"></p>
-    <footer><button type="submit" value="crea" class="primario" id="ng-crea">Crea il gruppo</button></footer>
+    <footer><button type="submit" value="crea" class="primario" id="ng-crea" data-solo-mac="agente:crea_gruppo=capogruppo">Crea il gruppo</button></footer>
   </form>
 </dialog>
 
@@ -799,14 +882,57 @@
       <button type="button" class="icona chiudi-dialog" value="chiudi" title="Chiudi">✕</button></header>
     <ul id="al-lista" class="chiavi-note"></ul>
     <footer>
-      <button type="button" class="primario" id="al-profili" title="I fili della lavagna diventano i «Comunica con» dei profili">Scrivi nei profili</button>
-      <button type="button" id="al-lavagna" title="La lavagna prende i collegamenti scritti nei profili">Ridisegna dalla lavagna</button>
+      <button type="button" class="primario" id="al-profili" data-solo-mac="agente:allinea" title="I fili della lavagna diventano i «Comunica con» dei profili">Scrivi nei profili</button>
+      <button type="button" id="al-lavagna" data-solo-mac="agente:allinea" title="La lavagna prende i collegamenti scritti nei profili">Ridisegna dalla lavagna</button>
+    </footer>
+  </form>
+</dialog>
+
+
+<!-- guida della lavagna e controllo (l'utente, 02/10/2026): per ogni operazione cosa fa, cosa scrive, come si verifica, di chi è il problema -->
+<dialog id="guida-lavagna" class="scheda-agente">
+  <form method="dialog">
+    <header><div><b id="gl-titolo">Guida della lavagna</b><small id="gl-sotto">ogni operazione: cosa fa, cosa scrive, come la verifichi, di chi è il problema se non va</small></div>
+      <button type="button" class="icona chiudi-dialog" value="chiudi" title="Chiudi">✕</button></header>
+    <div id="gl-corpo"></div>
+    <footer><button type="button" id="gl-controlla" class="primario">Controlla adesso</button></footer>
+  </form>
+</dialog>
+
+<!-- togliere dalla lavagna un agente o un gruppo: sospendere o eliminare davvero (l'utente, 30/09/2026) -->
+<dialog id="togli-scelta" class="scheda-agente">
+  <form method="dialog" id="form-togli-scelta">
+    <header><span class="avatar grande">✂</span><div><b id="ts-titolo">Cosa faccio?</b><small id="ts-sotto"></small></div>
+      <button type="button" class="icona chiudi-dialog" value="chiudi" title="Annulla">✕</button></header>
+    <p class="nota" id="ts-sospendi-nota"></p>
+    <p class="nota" id="ts-elimina-nota"></p>
+    <label class="sa-riga" id="ts-definitivo-riga"><span><input type="checkbox" id="ts-definitivo"> Cancella anche la copia di sicurezza: definitivo, non si recupera</span></label>
+    <footer>
+      <button type="button" id="ts-scheda" data-solo-mac="/api/pannello/modifica" class="secondario" title="L'agente resta com'è: la scheda può tornare con «Tutta la catena»">Solo la scheda</button>
+      <button type="button" id="ts-sospendi" data-solo-mac="agente:attivo" class="secondario">Sospendi</button>
+      <button type="button" id="ts-elimina" data-solo-mac="agente:togli_gruppo" class="primario">Elimina</button>
     </footer>
   </form>
 </dialog>
 
 <div id="toast" class="toast" role="status"></div>
+<script src="business.js"></script>
 <script src="app.js"></script>
+<!-- 2026-10-03: barra di schede in basso e tastiera sul telefono; funzioni del ponte (attive solo se /_ponte/stato risponde 200) -->
 <script src="mobile.js" defer></script>
+<script src="dettato.js" defer></script>
+<script src="voce-sintetica.js" defer></script>
+<script src="voce-chat.js" defer></script>
+<script src="attivita.js" defer></script>
+<script src="connessioni.js" defer></script>
+<script src="piani.js" defer></script>
+<script src="barra.js" defer></script>
+<script src="dots-vivi.js" defer></script>
+<script src="aspetto.js" defer></script>
+<script src="stop-chat.js" defer></script>
+<script src="notifiche.js" defer></script>
+<script src="fili.js" defer></script>
+<script src="temi.js" defer></script>
+<script src="dots.js" defer></script>
 </body>
 </html>

@@ -542,6 +542,7 @@
         tocca(["stato"]);
         return { lavoro: { id: l.id, titolo: l.titolo } };
       }
+      case "chat_voce_parla": return { messaggio: "", browser: true };
       case "chat_voce_manda": {
         S.voce.push({ chi: "boss", testo: String(c.testo || ""), ts: isoLocale(ora()) });
         setTimeout(() => { S.voce.push({ chi: "jarvis", testo: T("pieno") + ".", ts: isoLocale(ora()) }); tocca(["stato"]); }, 2200);
@@ -725,8 +726,121 @@
     return { messaggio: T("pieno") };
   }
 
+  // ------------------------------------------------------------ pagine del pannello 0.6 (05/10/2026)
+  // Tema e avatar uguali su ogni dispositivo, barra in alto, chat «Notifiche», lavagna salvata per operazioni,
+  // Connessioni, Piani, attività degli agenti, «Controlla la lavagna». Tutto in memoria, come il resto della demo.
+  const AVV = (fa) => AVVIO - fa * 60;
+  S.aspetto = { tema: "claude", avatar: "dots", fermi: false, v: 1, predefinito: false };
+  S.menu = null;
+  const MENU_PARTENZA = { ordine: ["chat", "lavagna", "agenti", "home", "missioni", "piani", "scadenze", "memoria", "connessioni", "computer", "telefono"],
+    in_barra: ["chat", "lavagna", "agenti", "home", "missioni", "piani"], predefinito: true };
+  const FILO_NOTIFICHE = "6f1d2c3a-8b4e-4f00-9a10-000000000001";
+  const notifica = (fa, titolo, testo) => ({ id: "n-" + fa, chi: "lui", testo, ts: AVV(fa), ora: hhmm(AVV(fa)), mittente: "Jarvis", notifica: true, classe: "report", titolo, fid: "n-" + fa });
+  S.fili = {
+    [FILO_NOTIFICHE]: { formato: 1, sessione: FILO_NOTIFICHE, interlocutore: "notifiche-jarvis", titolo: "Notifiche di Jarvis",
+      creato: AVV(600), aggiornato: AVV(12), versione: 3, in_attesa: [], messaggi: [
+        notifica(540, "Report del mattino", "Negozio online: 14 ordini, 2 fermi da ieri (il 1041 e il 1047). Studio: il commercialista aspetta il riepilogo di settembre entro il 10. Casa: bolletta della luce in scadenza venerdì."),
+        notifica(95, "Missione chiusa: fatture di settembre", "Il riepilogo è pronto in Report/Studio/Fatture settembre.pdf: 23 fatture, 2 senza ricevuta (le trovi in fondo)."),
+        notifica(12, "Aspetta il tuo sì", "La squadra del Negozio online ha pronte le 12 schede della collezione autunno: per pubblicarle serve il tuo sì nella missione."),
+      ] },
+  };
+  const filoRiassunto = (f) => ({ sessione: f.sessione, interlocutore: f.interlocutore, titolo: f.titolo, creato: f.creato,
+    aggiornato: f.aggiornato, versione: f.versione, n: f.messaggi.length, in_attesa: f.in_attesa.length });
+  S.connessioni = [
+    ["vps", "Server remoto (ssh)", "chiedi", 3], ["github", "GitHub (gh e git push)", "consentito", 40], ["gmail", "Posta Gmail", "chiedi", 180],
+    ["outlook", "Posta e calendario Microsoft 365", "spento", null], ["telegram", "Telegram", "chiedi", null], ["vercel", "Vercel", "chiedi", 2900],
+    ["meta-ads", "Meta Ads", "spento", null], ["slack", "Slack", "chiedi", null], ["canva", "Canva", "consentito", 600],
+    ["calendario", "Google Calendar", "consentito", 25], ["drive", "Google Drive", "chiedi", null],
+  ].map(([id, nome, stato, uso]) => ({ id, nome, stato, ultimo_uso: uso == null ? null : Math.round(AVV(uso)), finestra_fino: null }));
+  const connessioniPubbliche = () => ({ servizi: S.connessioni.map((x) => Object.assign({}, x)), creato: true, ora: ora() });
+  S.piani = [{
+    id: "p-lancio", titolo: "Lancio della collezione autunno", scopo: "Pubblicare le 12 schede nuove e annunciarle ai clienti",
+    stato: "da_approvare", spazio: "negozio", durata_min: 90, creato: Math.round(AVV(20)), conferma_finale: [],
+    servizi: ["github", "gmail"], cartelle: ["~/Progetti/Negozio online"], non_tocco: ["prezzi e magazzino", "ordini già pagati"],
+    passi: [{ n: 1, testo: "rileggere le schede e le foto", tipo: "lettura", stato: "da_fare" },
+      { n: 2, testo: "preparare la newsletter di lancio", tipo: "scrittura", stato: "da_fare" },
+      { n: 3, testo: "pubblicare le schede sul negozio", tipo: "irreversibile", comando: "negozio pubblica --collezione autunno --schede 12", stato: "da_fare" },
+      { n: 4, testo: "mandare la newsletter ai clienti", tipo: "irreversibile", comando: "newsletter invia --lista clienti --modello lancio-autunno", stato: "da_fare" }],
+  }];
+  const verifica = () => ({ quando: dataOra(ora()), controllati: { progetti: S.spazi.reduce((n, s) => n + s.progetti.length, 0), agenti: tuttiAg().length },
+    problemi: [], in_ordine: true });
+  function applicaOps(d, ops) {
+    d.lavagne = d.lavagne || {};
+    for (const op of ops || []) {
+      const k = String(op.lavagna || "");
+      if (op.op === "gruppi") d.gruppi = op.gruppi || [];
+      else if (op.op === "aspetto") { d.aspetto = d.aspetto || {}; if (op.valore == null) delete d.aspetto[op.chiave]; else d.aspetto[op.chiave] = op.valore; }
+      else if (op.op === "togli_lavagna") delete d.lavagne[k];
+      else {
+        const L = d.lavagne[k] = d.lavagne[k] || { nodi: [], fili: [], vista: { x: 0, y: 0, zoom: 1 } };
+        L.nodi = L.nodi || []; L.fili = L.fili || [];
+        if (op.op === "nodi") {
+          for (const n of op.nodi || []) {
+            const c = L.nodi.find((z) => z.id === n.id);
+            if (c) Object.assign(c, n);
+            else if (!(n.tipo === "agente" && L.nodi.some((z) => z.agente === n.agente))) L.nodi.push(Object.assign({}, n));
+          }
+        } else if (op.op === "togli_nodi") {
+          const via = new Set((op.ids || []).map(String));
+          L.nodi = L.nodi.filter((n) => !via.has(n.id));
+          L.fili = L.fili.filter((f) => !via.has(f.da) && !via.has(f.a));
+        } else if (op.op === "fili_aggiungi") {
+          for (const f of op.fili || []) if (!L.fili.some((x) => x.da === f.da && x.a === f.a)) L.fili.push({ da: f.da, a: f.a });
+        } else if (op.op === "fili_togli") {
+          L.fili = L.fili.filter((x) => !(op.fili || []).some((f) => f.da === x.da && f.a === x.a));
+        } else L[op.op] = op[op.op];
+      }
+    }
+    return d;
+  }
+  function get06(percorso, q) {
+    if (percorso === "/api/aspetto") return Object.assign({}, S.aspetto);
+    if (percorso === "/api/menu") return S.menu || MENU_PARTENZA;
+    if (percorso === "/api/fili") return { fili: Object.values(S.fili).map(filoRiassunto).sort((a, b) => b.aggiornato - a.aggiornato), ora: ora(), formato: 1 };
+    const m = percorso.match(/^\/api\/fili\/([0-9a-f-]{36})$/);
+    if (m) { if (!S.fili[m[1]]) throw Object.assign(new Error(tr("filo non trovato")), { codice: 404 }); return clona(S.fili[m[1]]); }
+    if (percorso === "/api/connessioni") return connessioniPubbliche();
+    if (percorso === "/api/piani") return { piani: clona(S.piani) };
+    if (percorso === "/api/lavagna/verifica") return verifica();
+    if (percorso === "/api/agenti-attivita") return { agenti: {}, sconosciuti: {}, ora_ts: ora() };
+    if (percorso === "/api/agente-attivita") return { agente: q.get("agente"), lavagna: q.get("lavagna") || "generale", stato: "fermo",
+      contatori: { ricevute: 0, inviate: 0, in_corso: 0, errori: 0, rimandate: 0, senza_risposta: 0, con_avvisi: 0, ultima_ts: null, durata_media_s: null }, righe: [], ora_ts: ora() };
+    if (percorso === "/api/scegli-cartella") throw Object.assign(new Error(T("pieno")), { codice: 501 });
+    return undefined;
+  }
+  function post06(percorso, corpo) {
+    if (percorso === "/api/aspetto") { S.aspetto = Object.assign({}, S.aspetto, { tema: corpo.tema, avatar: corpo.avatar, fermi: !!corpo.fermi, v: S.aspetto.v + 1, predefinito: false }); return Object.assign({}, S.aspetto); }
+    if (percorso === "/api/menu") { S.menu = { ordine: corpo.ordine || [], in_barra: corpo.in_barra || [], predefinito: false }; return S.menu; }
+    if (percorso === "/api/pannello/modifica") {
+      const base = S.panVer;
+      S.pannello = applicaOps(clona(S.pannello || { gruppi: [], aspetto: {}, lavagne: {} }), corpo.ops);
+      S.panVer++;
+      scriviSS("demo.pannello", S.pannello);
+      return { versione: S.panVer, pannello: Object.assign({ versione: S.panVer }, S.pannello), base_superata: typeof corpo.base === "number" && corpo.base < base };
+    }
+    if (percorso === "/api/connessioni") {
+      const x = S.connessioni.find((s) => s.id === corpo.id);
+      if (!x) throw Object.assign(new Error(tr("servizio sconosciuto")), { codice: 404 });
+      if (corpo.stato) x.stato = corpo.stato;
+      if (corpo.via_minuti) x.finestra_fino = Math.round(ora() + corpo.via_minuti * 60);
+      if (corpo.chiudi) x.finestra_fino = null;
+      return connessioniPubbliche();
+    }
+    if (percorso === "/api/piani") {
+      const p = S.piani.find((x) => x.id === corpo.id);
+      if (!p) throw Object.assign(new Error(tr("piano non trovato")), { codice: 404 });
+      p.stato = { approva: "approvato", rifiuta: "rifiutato", "conferma-finale": "concluso", ferma: "annullato" }[corpo.azione] || p.stato;
+      toastDopo(T("pieno"));
+      return { piani: clona(S.piani) };
+    }
+    if (percorso === "/api/notifica") return { ok: true };
+    return undefined;
+  }
+
   // ------------------------------------------------------------ le altre POST
   function post(percorso, corpo) {
+    const r06 = post06(percorso, corpo);
+    if (r06 !== undefined) return r06;
     if (percorso === "/api/azione") return azione(corpo || {});
     if (percorso === "/api/pannello") {
       const c = Object.assign({}, corpo);
@@ -773,6 +887,8 @@
 
   // ------------------------------------------------------------ le GET
   function get(percorso, q) {
+    const r06 = get06(percorso, q);
+    if (r06 !== undefined) return r06;
     if (percorso === "/api/stato") return stato();
     if (percorso === "/api/catalogo") return catalogo();
     if (percorso === "/api/spazi") return { spazi: spaziPubblici(), gruppi_archiviati: gruppiArchiviati() };
@@ -823,7 +939,7 @@
       return { telefono: { collegato: true, modello: "Pixel 8", versione: "1.0.1", codice: 12, android: "15", servizio: true, accessibilita: true, batteria: 78, debug: false },
         log: [hhmmss(ora() - 600) + " app: collegata al ponte", hhmmss(ora() - 420) + " voce: frase riconosciuta (1,2 s)", hhmmss(ora() - 60) + " app: battito regolare"] };
     }
-    if (percorso === "/api/chat/storia") return { battute: S.voce.slice(-150) };
+    if (percorso === "/api/chat/storia") return { battute: S.voce.slice(-150), macchina: "vps" };   // 📞: conversazione dal browser
     m = percorso.match(/^\/api\/lavoro\/([\w-]+)$/);
     if (m) {
       let l = S.lavori.find((x) => x.id === m[1]);

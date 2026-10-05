@@ -11,7 +11,7 @@ Jarvis è il braccio destro che lavora sul tuo computer con Claude Code. Divide 
 - **Online:** https://jarvis-business-it.github.io/Jarvis-Demo/
 - **Sul tuo computer:** in alto su GitHub scegli **Code → Download ZIP**, scompatta e fai doppio clic su `index.html`. Funziona anche senza internet.
 
-Il cliente di prova si chiama Mario Rossi e ha tre spazi di lavoro: Negozio online, Studio e Casa. Clicca pure dappertutto: tiri e togli i fili sulla lavagna, sposti le schede, apri il profilo di un agente, affidi una missione e guardi la squadra lavorare, rispondi Sì o No a una conferma, chiudi le scadenze. Il pannello è in italiano, inglese, spagnolo, francese e tedesco (in alto a destra).
+Il cliente di prova si chiama Mario Rossi e ha tre spazi di lavoro: Negozio online, Studio e Casa. Clicca pure dappertutto: tiri e togli i fili sulla lavagna, sposti le schede, apri il profilo di un agente, affidi una missione e guardi la squadra lavorare, rispondi Sì o No a una conferma, chiudi le scadenze. Il pannello è in italiano, inglese, spagnolo, francese e tedesco (in alto a destra). Dalla 0.6 è uguale al Jarvis che usiamo noi ogni giorno: cinque temi (Scuro, Nero, Chiaro, Claude, Automatico, dai pallini colorati in alto), gli agenti con le mascotte Dots, la barra delle pagine che ordini tu, la chat a schede con le Notifiche, i Piani da approvare e le Connessioni. Prova anche dal telefono: le pagine stanno in una barra in basso.
 
 | La missione chiede il tuo sì | Il profilo di un agente |
 |---|---|
@@ -21,7 +21,7 @@ Il cliente di prova si chiama Mario Rossi e ha tre spazi di lavoro: Negozio onli
 
 ## Cosa c'è qui e cosa no
 
-Qui c'è la pagina vera del pannello, uguale a quella del prodotto. Al posto del server c'è un server finto (`demo/finto.js`) che risponde con i dati di esempio di `demo/dati/`. Le cose che nel prodotto lavorano davvero (la chat con Claude Code, le telefonate, il server, gli aggiornamenti) nella demo rispondono con un avviso.
+Qui c'è la pagina vera del pannello, uguale a quella del prodotto. Le immagini delle mascotte Dots vengono da [OpenDots](https://github.com/CopilotKit/OpenDots) (licenza MIT, «Copyright (c) Atai Barkai», testo in `demo/dots/LICENSE-OpenDots.txt`). Al posto del server c'è un server finto (`demo/finto.js`) che risponde con i dati di esempio di `demo/dati/`. Le cose che nel prodotto lavorano davvero (la chat con Claude Code, le telefonate, il server, gli aggiornamenti) nella demo rispondono con un avviso.
 
 Nella versione completa ci sono il server del pannello, gli agenti veri, la memoria, l'installazione guidata su misura e gli aggiornamenti.
 
