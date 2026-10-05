@@ -12,6 +12,7 @@
 <link rel="icon" type="image/png" sizes="64x64" href="icona-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icona-180.png">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="mobile.css">
 <link rel="stylesheet" href="demo.css">
 <!-- DEMO: al posto del server, i dati finti (dati/*.js) e il server finto (finto.js), prima di app.js.
      finto.js mette token, appellativo, lingua e dizionario (lingue/<codice>.js) come farebbe il server vero. -->
@@ -327,7 +328,7 @@
     </section>
 
     <!-- ------------------------------------------------ SQUADRA (era «Catena · Lavori»)
-         Rifatta il 26/09/2026 (richiesta di Boss): tutto quello che dice chi lavora sta qui.
+         Rifatta il 26/09/2026 (richiesta): tutto quello che dice chi lavora sta qui.
          Ordine: chi lavora ora, le chiavi e le anomalie del portiere, i lavori col dettaglio,
          la squadra per spazio, le verifiche del CRM, le sessioni aperte. Le scadenze stanno
          in Stato, gli «Agenti delle missioni» in Missioni. -->
@@ -527,6 +528,8 @@
             <p class="nota" id="accesso-scadenza"></p>
             <p class="nota">Inquadra il codice con la fotocamera del telefono, collegato allo stesso Wi-Fi di questo computer. Dentro c'è la chiave di accesso: non mandarlo a nessuno.</p>
             <p class="nota avviso-rete">Chi è nella stessa rete e ha il codice può usare il pannello. Il pannello non risponde mai da Internet, solo da indirizzi della rete di casa.</p>
+            <p class="nota">Dal telefono si legge tutto e si fanno solo le azioni innocue: niente chat che lanciano Claude, missioni nuove, agenti, interruttori o aggiornamenti.</p>
+            <label class="nota nascosto" id="accesso-riga-conferme"><input type="checkbox" id="accesso-conferme"> Dal telefono si può rispondere Sì alle conferme delle missioni</label>
             <div class="elenco-pulsanti">
               <button type="button" class="primario nascosto" data-accesso="accendi">Accendi l'accesso dal telefono</button>
               <button type="button" class="nascosto" data-accesso="nuovo_codice" title="Il codice di prima smette di valere su tutti i telefoni">Nuovo codice</button>
@@ -804,5 +807,6 @@
 
 <div id="toast" class="toast" role="status"></div>
 <script src="app.js"></script>
+<script src="mobile.js" defer></script>
 </body>
 </html>

@@ -43,12 +43,13 @@ traduciPagina(document.head);
 traduciPagina(document.body);
 
 // ---------------------------------------------------------------- codice di accesso
-// Sul computer il server mette il token nella pagina (cambia a ogni avvio). Dal telefono la pagina
-// arriva senza: il codice di accesso sta nell'indirizzo del QR (?t=...), la pagina lo tiene in
-// localStorage e lo toglie dall'indirizzo.
-const DAL_TELEFONO = !window.CC_TOKEN || window.CC_TOKEN === "__TOKEN__";
+// Sul computer (27/09/2026) la pagina non porta più nessun token: si entra dal link monouso che
+// avvia apre, e da lì ogni richiesta porta il cookie di sessione (HttpOnly, SameSite=Strict), che
+// il browser manda da solo. Dal telefono il codice di accesso sta nell'indirizzo del QR (?t=...):
+// la pagina lo tiene in localStorage, lo toglie dall'indirizzo e lo manda in X-Token.
+const DAL_TELEFONO = window.CC_DOVE === "rete";
 const TOKEN = (() => {
-  if (!DAL_TELEFONO) return window.CC_TOKEN;
+  if (!DAL_TELEFONO) return "";
   const q = new URLSearchParams(location.search).get("t") || "";
   if (q) {
     try { localStorage.setItem("cc.token_telefono", q); } catch (e) { /* resta nell'indirizzo */ }
@@ -60,7 +61,7 @@ const TOKEN = (() => {
 // chi usa il pannello: l'appellativo scelto all'installazione (profilo), messo nella pagina dal server
 const UTENTE = (window.CC_UTENTE && window.CC_UTENTE !== "__UTENTE__") ? window.CC_UTENTE : "Boss";
 const $ = (id) => document.getElementById(id);
-const HDR = { "X-Token": TOKEN, "Content-Type": "application/json" };
+const HDR = TOKEN ? { "X-Token": TOKEN, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
 // gli stati dei lavori arrivano dal server in italiano: si mostrano tradotti da qui
 const NOME_STATO = { "in corso": t("in corso"), finito: t("finito"), errore: t("errore") };
 const VOCE = { idle: t("in attesa"), listening: t("ascolto"), thinking: t("sto pensando"), speaking: t("parlo") };
@@ -102,8 +103,8 @@ async function api(percorso, corpo, tetto = TETTO_API) {
     clearTimeout(timer);
   }
   const d = await r.json().catch(() => ({}));
-  // Il token cambia a ogni avvio del server: una pagina aperta prima (anche l'app installata)
-  // riceverebbe 403 per sempre. Si ricarica da sola, al massimo una volta ogni 15 secondi.
+  // Sessione scaduta o tolta: la pagina si ricarica (al massimo una volta ogni 15 secondi) e il
+  // server mostra come rientrare, cioè dal link di avvio.
   if (r.status === 403 && d.token_scaduto && DAL_TELEFONO) {
     // dal telefono ricaricare non serve: il codice nuovo sta nel QR sul computer
     throw new Error(t("Codice di accesso non valido o scaduto: inquadra di nuovo il codice QR sul computer"));
@@ -114,7 +115,7 @@ async function api(percorso, corpo, tetto = TETTO_API) {
       sessionStorage.setItem("cc.ricarica", String(Date.now()));
       location.reload();
     }
-    throw new Error(t("il Command Center è ripartito: ricarico la pagina"));
+    throw new Error(t("accesso scaduto: ricarico la pagina"));
   }
   if (!r.ok) throw new Error(d.errore || t("errore {codice}", { codice: r.status }));
   return d;
@@ -2410,7 +2411,7 @@ $("btn-ripristina-gruppi").addEventListener("click", () => {
 });
 $("cerca-agenti").addEventListener("input", (ev) => { filtro = ev.target.value.trim(); disegnaGruppi(); });
 
-// ------------------------------------------------ chi lavora DAVVERO adesso (26/09/2026, richiesta di Boss)
+// ------------------------------------------------ chi lavora DAVVERO adesso (26/09/2026, richiesta)
 // Una sola fonte, attivita(s), calcolata a ogni giro di aggiorna() (col flusso: in tempo reale).
 // Sorgenti: gli agenti «attivo» della sessione di Claude, gli esperti e il capo delle missioni, i
 // lavori in corso (interlocutore «progetto:agente» o «jarvis»), le sessioni di Claude che lavorano
@@ -2909,7 +2910,7 @@ $("sa-togli").addEventListener("click", async (ev) => {
   if (d) { $("scheda-agente").close(); caricaSpazi(); }
 });
 
-// ---- «Aggiorna agenti → Jarvis» (richiesta di Boss, 26/09/2026): la mappa degli agenti la tiene
+// ---- «Aggiorna agenti → Jarvis» (richiesta, 26/09/2026): la mappa degli agenti la tiene
 // Jarvis, non la pagina. La pagina gli manda quello che vede: spazi, progetti e agenti veri
 // (da /api/catalogo), i fili della lavagna aperta e, dalla scheda, l'agente scelto.
 function datiAgenti(k) {
@@ -3389,7 +3390,7 @@ document.addEventListener("click", (ev) => {
   if (b) chiediJarvis(b.dataset.chiedi, b.dataset.box || "");
 });
 
-// ---- modo della chat: lavoro o lettura (contratto, punto 4, decisione di Boss del 26/09/2026)
+// ---- modo della chat: lavoro o lettura (contratto, punto 4, decisione del 26/09/2026)
 // Il server vecchio non manda modo_chat e risponde sempre in plan mode: allora «lavoro» è spento.
 const TESTO_MODO = { lavoro: t("lavora davvero: la guardia blocca l'irreversibile"), lettura: t("legge e riferisce, non cambia niente") };
 const NOME_MODO = { lavoro: t("lavoro"), lettura: t("lettura") };
@@ -3610,7 +3611,7 @@ function aggiornaInvia() {
 }
 function autoAltezza() { const c = $("chiedi-testo"); c.style.height = "auto"; c.style.height = Math.min(200, c.scrollHeight) + "px"; }
 
-// Il menu «/» (26/09/2026, richiesta di Boss): tutti i comandi, in gruppi. Diretti (i quattro di
+// Il menu «/» (26/09/2026, richiesta): tutti i comandi, in gruppi. Diretti (i quattro di
 // sempre), skill e comandi di Claude Code (catalogo, «skills»: il server accetta «/nome …»), le
 // verifiche («/verifica:<id>», lanciano l'azione verifica) e i comandi rapidi («/rapido:<id>»).
 // Si filtra su nome e descrizione con quello che si scrive dopo la barra.
@@ -3711,9 +3712,32 @@ $("btn-nuova-chat").addEventListener("click", () => apriChat("jarvis"));
 // ------------------------------------------------ lavagna
 const LAV = { sel: null, selFilo: null };
 function nodoDi(id) { return lav().nodi.find((n) => n.id === id); }
-function vista() { return lav().vista || (lav().vista = { x: 0, y: 0, zoom: 1 }); }
+// La vista (zoom e scorrimento) è di questo dispositivo (2026-10-05): localStorage, non pannello.json. Quella salvata
+// dal computer (schermo largo) sul telefono mostrava solo un angolo: un dispositivo senza una vista sua centra la
+// lavagna sul suo schermo la prima volta che la vede (adattaVistaSeServe), e da lì la vista resta sua.
+const VISTE_LETTE = new Set();
+const VISTE_DA_ADATTARE = new Set();
+function vista() {
+  const L = lav();
+  if (!VISTE_LETTE.has(lavagnaAttiva)) {
+    VISTE_LETTE.add(lavagnaAttiva);
+    const v = mem.leggi("vista:" + lavagnaAttiva, null);
+    if (v && [v.x, v.y, v.zoom].every(Number.isFinite)) L.vista = v;
+    else { L.vista = { x: 0, y: 0, zoom: 1 }; VISTE_DA_ADATTARE.add(lavagnaAttiva); }
+  }
+  return L.vista || (L.vista = { x: 0, y: 0, zoom: 1 });
+}
+// la prima volta che la lavagna è a schermo con le schede disegnate: «Centra» su questo schermo, senza salvare il pannello
+function adattaVistaSeServe() {
+  if (!VISTE_DA_ADATTARE.has(lavagnaAttiva)) return;
+  const r = $("lavagna").getBoundingClientRect();
+  if (r.width < 40 || r.height < 40 || !$("lav-mondo").querySelector(".nodo")) return;   // nascosta o vuota: alla prossima
+  VISTE_DA_ADATTARE.delete(lavagnaAttiva);
+  centraLavagna(false);
+}
 function applicaVista() {
   const v = vista();
+  if (!VISTE_DA_ADATTARE.has(lavagnaAttiva)) mem.scrivi("vista:" + lavagnaAttiva, v);
   $("lav-mondo").style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.zoom})`;
   // le bolle delle sinapsi restano leggibili a ogni zoom: si ingrandiscono al contrario del foglio
   $("lav-mondo").style.setProperty("--inv", String(Math.min(1.8, 1 / v.zoom)));
@@ -3735,6 +3759,7 @@ function disegnaLavagna() {
   }
   $("lav-vuota").classList.toggle("nascosto", lav().nodi.length > 0);
   applicaVista();
+  adattaVistaSeServe();
   disegnaFili();
   segnaAttivi();
   $("lav-togli").disabled = !(LAV.sel || LAV.selFilo != null);   // il filo 0 è un filo vero
@@ -4004,6 +4029,7 @@ function apriGruppoInLavagna(gid) {
   const r = posizionaGruppoPiramide(agentiGruppo, 40, 30);
   if (r.tocco) salvaPannello();
   location.hash = "#lavagna";
+  chiudiCassetti();   // 2026-10-05: sul telefono il cassetto degli agenti restava aperto sopra la lavagna
   requestAnimationFrame(() => { disegnaLavagna(); centraLavagna(); });
 }
 // Trova o crea una nota ferma (non entra in modifica): serve per i nodi radice
@@ -4045,7 +4071,7 @@ async function sincronizzaComunicazioni(agenteKey) {
 // Un collegamento fatto o tolto a mano nella lavagna arriva a Boss su
 // Telegram, non solo nel registro eventi: Jarvis dice cosa è cambiato.
 function notificaBoss(testo) { if (!lavDemo) api("/api/notifica-boss", { testo }).catch(() => {}); }   // negli eventi del pannello; in dimostrazione niente
-// «Tutta la catena» (rifatta il 26/09/2026, richiesta di Boss): una piramide dall'alto in basso.
+// «Tutta la catena» (rifatta il 26/09/2026, richiesta): una piramide dall'alto in basso.
 //   livello 0 Boss · livello 1 Jarvis, con i suoi agenti di casa accanto (esecutore, ricercatore-web)
 //   livello 2 i capigruppo, raggruppati per spazio sotto un'etichetta del colore dello spazio
 //   sotto ogni capogruppo la sua squadra IN COLONNA (due colonne affiancate oltre le 6 schede).
@@ -4293,7 +4319,9 @@ function ordinaColonne() {
 // «Centra» adatta la vista al contenuto (26/09/2026): il rettangolo di tutte le schede, con le
 // misure vere, sta nella tela con 40 px di margine; zoom fra 0,3 e 1. Se a 0,3 non ci sta tutto
 // si parte dall'alto, centrati in orizzontale: la testa della piramide resta in vista.
-function centraLavagna() {
+function centraLavagna(salva = true) {
+  if (salva instanceof Event) salva = true;   // dal pulsante «Centra»
+  VISTE_DA_ADATTARE.delete(lavagnaAttiva);    // centrata a mano o da un comando: la vista ora è di questo dispositivo
   const nodi = lav().nodi;
   const r = $("lavagna").getBoundingClientRect();
   if (!nodi.length || !r.width) { lav().vista = { x: 0, y: 0, zoom: 1 }; applicaVista(); return; }
@@ -4305,7 +4333,8 @@ function centraLavagna() {
   const x = (r.width - w * zoom) / 2 - minX * zoom;
   const y = h * zoom <= r.height - 2 * M ? (r.height - h * zoom) / 2 - minY * zoom : M - minY * zoom;
   lav().vista = { zoom, x, y };
-  applicaVista(); salvaPannello();
+  applicaVista();
+  if (salva) salvaPannello();
 }
 
 // mouse e dita sulla lavagna: sposta schede, tira fili, sposta il foglio
@@ -4427,7 +4456,7 @@ function scegliPannello(quale) {
   if (!PANNELLI.includes(quale)) quale = "lavagna";
   for (const p of document.querySelectorAll(".pannello-destra")) p.classList.toggle("attivo", p.dataset.pannello === quale);
   mem.scrivi("destra", quale);
-  if (quale === "lavagna") requestAnimationFrame(disegnaFili);
+  if (quale === "lavagna") requestAnimationFrame(() => { adattaVistaSeServe(); disegnaFili(); });   // prima volta a schermo: si adatta
   return quale;
 }
 const pannelloAttivo = () => location.hash.slice(1);
@@ -4535,8 +4564,8 @@ function ogni(fn, visibile, nascosta) {
 // rilegge /api/stato subito, con 300 ms di attesa per raccogliere gli eventi vicini. Con il flusso
 // vivo il sondaggio scende a uno ogni 15 s (rete di sicurezza); se il flusso cade resta a 15 s e
 // si ricollega con attesa crescente, da 2 a 30 s. Il server vecchio non ha /api/flusso (404):
-// allora resta il sondaggio di prima, ogni 4 s. EventSource non manda intestazioni: il token va
-// nell'indirizzo, e il server lo accetta solo lì.
+// allora resta il sondaggio di prima, ogni 4 s. EventSource non manda intestazioni: sul computer
+// vale il cookie, dal telefono il codice va nell'indirizzo, e il server lo accetta solo lì.
 const FLUSSO = { stato: "sondaggio", es: null, versione: null, attesa: 2000, timer: null, rimbalzo: null, provato: false };
 let ritmoAggiorna = 4000;
 function flussoSegna(stato) {
@@ -4555,14 +4584,15 @@ function chiediAggiorna() {
 async function flussoApri() {
   if (FLUSSO.es || FLUSSO.stato === "assente") return;
   if (!("EventSource" in window)) { flussoSegna("assente"); return; }
-  const url = "/api/flusso?token=" + encodeURIComponent(TOKEN);
+  // sul computer il cookie basta (EventSource lo manda da sé); dal telefono il codice va nell'indirizzo
+  const url = "/api/flusso" + (TOKEN ? "?token=" + encodeURIComponent(TOKEN) : "");
   // EventSource non dice il codice di risposta: una prova sola, all'avvio, per riconoscere il 404
   if (!FLUSSO.provato) {
     FLUSSO.provato = true;
     const ctl = new AbortController();
     const tetto = setTimeout(() => ctl.abort(), 5000);
     try {
-      const r = await fetch(url, { headers: { "X-Token": TOKEN }, signal: ctl.signal, cache: "no-store" });
+      const r = await fetch(url, { headers: TOKEN ? { "X-Token": TOKEN } : {}, signal: ctl.signal, cache: "no-store" });
       if (r.status === 404) { flussoSegna("assente"); return; }
     } catch (e) { /* rete giù o prova troppo lenta: ci pensa la riconnessione */ }
     finally { clearTimeout(tetto); ctl.abort(); }
@@ -4646,6 +4676,8 @@ function disegnaAccesso(d) {
     qr.classList.add("nascosto");
     $("accesso-scadenza").textContent = "";
   }
+  $("accesso-riga-conferme").classList.toggle("nascosto", !d.acceso);
+  $("accesso-conferme").checked = !!d.conferme;
   btn("accendi").classList.toggle("nascosto", d.acceso);
   btn("spegni").classList.toggle("nascosto", !d.acceso);
   btn("nuovo_codice").classList.toggle("nascosto", !d.attivo);
@@ -4669,6 +4701,18 @@ document.addEventListener("click", async (ev) => {
     toast(cosa === "accendi" ? t("Accesso dal telefono acceso") : cosa === "spegni" ? t("Accesso dal telefono spento") : t("Codice nuovo: inquadra di nuovo il QR"));
   } catch (e) { toast(e.message, true); }
   finally { b.disabled = false; }
+});
+// il Sì alle conferme delle missioni dal telefono: spento di default, si accende solo da qui (27/09/2026)
+$("accesso-conferme").addEventListener("change", async (ev) => {
+  const c = ev.currentTarget;
+  const valore = c.checked;
+  if (valore && !confirm(t("Dal telefono si potrà dire Sì alle azioni irreversibili delle missioni (cancellare, pubblicare, mandare messaggi). Accendo?"))) { c.checked = false; return; }
+  c.disabled = true;
+  try {
+    disegnaAccesso(await api("/api/accesso_telefono", { cosa: "conferme", valore }, 20000));
+    toast(valore ? t("Dal telefono il Sì alle conferme è acceso") : t("Dal telefono il Sì alle conferme è spento"));
+  } catch (e) { c.checked = !valore; toast(e.message, true); }
+  finally { c.disabled = false; }
 });
 caricaAccesso();
 setInterval(() => { if (!document.hidden && location.hash === "#telefono") caricaAccesso(); }, 30000);

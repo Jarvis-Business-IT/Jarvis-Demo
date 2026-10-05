@@ -18,3 +18,10 @@ body.con-banner-demo .app.destra-intera .destra { margin-top: var(--banner-demo)
   .demo-banner { font-size: 11px; justify-content: flex-start; padding: 0 10px; }
 }
 
+
+/* sito per telefono (mobile.css, 05/10/2026): la pagina è alta quanto lo schermo meno la striscia; la lavagna a pagina
+   intera sta dentro .app (che ha già la striscia sopra), quindi senza il margine in più */
+@media (max-width: 820px), (pointer: coarse) and (hover: none) {
+  body.con-banner-demo .app { height: calc(var(--app-h, 100dvh) - var(--banner-demo)); }
+  body.con-banner-demo .app.destra-intera .destra { margin-top: 0; }
+}

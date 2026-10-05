@@ -3,7 +3,7 @@
 
 Uso: python3 strumenti/copia_pannello.py <cartella command-center/static del prodotto>
 
-Copia app.js, app.css, logo e icone senza modificarli; rifà demo/index.html dall'index.html del
+Copia app.js, app.css, mobile.js, mobile.css (sito per telefono, 05/10/2026), logo e icone senza modificarli; rifà demo/index.html dall'index.html del
 prodotto (percorsi relativi, niente manifest, banner della demo, dati finti e finto.js prima di
 app.js); rifà demo/lingue/<codice>.js dai dizionari JSON (da file:// un JSON non si legge con fetch).
 I dati finti (demo/dati/*.js), finto.js e demo.css non si toccano.
@@ -18,7 +18,7 @@ DEMO = RADICE / "demo"
 if len(sys.argv) < 2:
     sys.exit(__doc__)
 STATIC = Path(sys.argv[1]).expanduser()
-FILE = ["app.js", "app.css", "logo.svg", "icona-32.png", "icona-64.png", "icona-180.png", "icona-192.png", "icona-512.png"]
+FILE = ["app.js", "app.css", "mobile.js", "mobile.css", "logo.svg", "icona-32.png", "icona-64.png", "icona-180.png", "icona-192.png", "icona-512.png"]
 
 BANNER = ('<a class="demo-banner" id="demo-banner" href="https://github.com/sponsors/AndyTrust" target="_blank" '
           'rel="noopener" translate="no"><b>Jarvis Business</b><span>Demo · dati finti · Jarvis Business completo a 2 $/mese →</span></a>\n')
@@ -43,9 +43,11 @@ def main():
     h = sostituisci(h, '<html lang="__LANG__">', '<html lang="it">')
     h = sostituisci(h, "<title>Jarvis Command Center</title>", "<title>Jarvis Command Center · Demo</title>")
     h = sostituisci(h, '<link rel="manifest" href="/manifest.webmanifest">\n', "")
+    # demo.css per ultimo, dopo mobile.css (sito per telefono): la striscia della demo vince sulle altezze del telefono
+    h = sostituisci(h, '<link rel="stylesheet" href="/static/mobile.css">\n', "")
     h = sostituisci(h, '<link rel="stylesheet" href="/static/app.css">',
-                    '<link rel="stylesheet" href="app.css">\n<link rel="stylesheet" href="demo.css">')
-    inizio = h.index("<!-- il server mette token")
+                    '<link rel="stylesheet" href="app.css">\n<link rel="stylesheet" href="mobile.css">\n<link rel="stylesheet" href="demo.css">')
+    inizio = h.index("<!-- il server mette")   # «mette token» fino alla 0.5.1, «mette da dove» dalla 0.5.2
     fine = h.index("</script>", inizio) + len("</script>")
     h = h[:inizio] + SCRIPT_DEMO + h[fine:]
     h = sostituisci(h, "<body>\n", "<body>\n" + BANNER)

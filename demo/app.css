@@ -718,7 +718,7 @@ p.comando { font: 12px var(--mono); user-select: all; background: var(--chrome);
 dl.schede dt { color: var(--tenue); font-size: 12px; }
 dl.schede dd { margin: 0; }
 
-/* banco tecnico: arancione, per decisione di Boss del 20/09/2026 — non deve mai
+/* banco tecnico: arancione, per decisione del 20/09/2026 — non deve mai
    sembrare il pannello di tutti i giorni */
 .vista-tecnica .pannello { border-color: rgba(208, 135, 112, .4); }
 .vista-tecnica h2 { color: var(--arancio); }
@@ -728,7 +728,7 @@ dl.schede dd { margin: 0; }
 .toast.visibile { opacity: 1; transform: translateX(-50%); }
 .toast.errore { border-color: rgba(227, 70, 113, .6); }
 .velo { display: none; }
-/* lavagna, browser e Canva a pagina intera (richiesta di Boss del 24/09/2026) */
+/* lavagna, browser e Canva a pagina intera (richiesta del 24/09/2026) */
 .app.destra-intera .destra { position: fixed; top: 0; right: 0; bottom: 0; left: var(--lato); width: auto; z-index: 15; transform: none; visibility: visible; border-left: 0; box-shadow: none; animation: entra .2s var(--dolce); }
 /* la colonna degli agenti resta visibile anche a pagina intera: si trascina da lì nella lavagna */
 .app.destra-intera .lato { position: relative; z-index: 16; }
@@ -967,7 +967,7 @@ button.piccolo.in-attesa::before, .sezione-chiedi button.in-attesa::before, #sen
 .nodo.nota.colorata { background: color-mix(in srgb, var(--c) 16%, var(--rialzo)); border-color: color-mix(in srgb, var(--c) 60%, transparent); }
 .nodo.nota.colorata .testo-nota { font-weight: 600; color: color-mix(in srgb, var(--c) 55%, #fff); }
 
-/* ======================================================= Stato e Scadenze (26/09/2026, richiesta di Boss) */
+/* ======================================================= Stato e Scadenze (26/09/2026, richiesta) */
 /* ---- «Cosa succede» in cima a Stato ---- */
 #box-eventi .lista-eventi { max-height: 430px; }
 .lista-eventi li { display: grid; grid-template-columns: auto 8px minmax(0, 1fr); gap: 8px; align-items: baseline; }
@@ -1073,7 +1073,7 @@ body.lav-demo .solo-demo { display: inline-flex !important; }
 .benvenuto .spunto-freq > button.togli:hover { color: var(--rosso); }
 .benvenuto .spunti small { color: var(--tenue); font-size: 10.5px; }
 
-/* ======================================================= chi lavora davvero (26/09/2026, richiesta di Boss)
+/* ======================================================= chi lavora davvero (26/09/2026, richiesta)
    Le stesse classi della dimostrazione: .al-lavoro sulle schede della lavagna, .acceso sui fili. */
 .agente.attivo { background: rgba(89, 156, 231, .09); box-shadow: inset 2px 0 0 var(--accento), 0 0 14px -6px rgba(89, 156, 231, .7); }
 .gruppo.acceso .gruppo-testa { color: var(--testo); }

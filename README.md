@@ -29,4 +29,8 @@ Nella versione completa ci sono il server del pannello, gli agenti veri, la memo
 
 > **Abbonati su [github.com/sponsors/AndyTrust](https://github.com/sponsors/AndyTrust)** e ricevi l'accesso al repository privato con Jarvis Business: installazione guidata, agenti, memoria, pannello e aggiornamenti.
 
+Puoi abbonarti anche su [patreon.com/ItaloMarziano](https://www.patreon.com/ItaloMarziano), con 7 giorni di prova gratuita.
+
+Se ti serve un server, noi usiamo Hostinger: con [questo link](https://www.hostinger.com/it?REFERRALCODE=ITALOMARZIANO) ci dai una mano a mantenere il progetto e a te non costa niente in più (è un link di affiliazione).
+
 Questa demo è coperta da [LICENSE](LICENSE): puoi provarla, non ridistribuirla.
